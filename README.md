@@ -17,3 +17,9 @@ address, making it impossible for an owner to mint an ERC721 token twice.
 ### 🏠 Estate Agent
 The EstateAgent houses the bonding curve function and purchasing and selling of SPACE tokens. <br />
 Since the SPACE tokens have to be minted only when a buyer exists, the bonding curve requires a slight modification to its implementation. It allows for continuous minting of tokens but only up to a certain threshold which is declared during initialization under *_currentLimit*.
+
+### 💵 Rental Agent
+Handles the rental of SPACE tokens. Each rental lasts for **1 year** and will cost 1/10 of the current SPACE purchase price.
+
+### 🗳️ Administration
+Handles adding/removing admins from control of the contract
