@@ -1,17 +1,9 @@
 pragma solidity ^0.6.8;
 
 import './DecentramallToken.sol';
+import './Administration.sol';
 
-contract EstateAgent {
-    //Mapping of admins
-    mapping (address => bool) public adminByAddress;
-
-    //Mapping of buyers & their tokenID
-    mapping (address => uint256) public tokenByOwner;
-
-    //Mapping of legitimate buyers
-    mapping (address => bool) public tokenHolder;
-
+contract EstateAgent is Administration{
     //Max limit of tokens to be minted
     uint256 private _currentLimit;
 
@@ -20,40 +12,26 @@ contract EstateAgent {
 
     DecentramallToken public token;
 
-    modifier onlyAdmin {
-        require(adminByAddress[msg.sender] == true, "Not an admin!");
-        _;
-    }
-
-    modifier legitimateBuyer {
-        require(tokenHolder[msg.sender] == true &&
-        tokenByOwner[msg.sender] == uint256(keccak256(abi.encodePacked(msg.sender))), "Not legitimate!");
-        _;
-    }
-
     event TokenCreated(address token);
     event SetToken(DecentramallToken newContract);
     event SetLimit(uint256 limit);
     event Withdraw(address to, uint256 amount);
     event BuyToken(address buyer, uint256 price);
     event SellToken(address seller, uint256 price);
-    event AddAdmin(address newAdmin);
-    event RemoveAdmin(address oldAdmin);
 
     constructor(uint256 currentLimit, uint256 basePrice) public{
         token = new DecentramallToken(address(this));
 
         _currentLimit = currentLimit;
         _basePrice = basePrice;
-        // Register creator as admin
-        adminByAddress[msg.sender] = true;
         emit TokenCreated(address(token));
     }
 
     /**
      * @dev Withdraw funds from this contract
-     *
-     * TODO: Make it multisig so not one admin can withdraw all
+     * @param to address to withdraw to
+     * @param amount the amount to withdraw
+     * @notice TODO: Make it multisig so not one admin can withdraw all
      */
     function withdraw(address payable to, uint256 amount) external onlyAdmin{
         require(address(this).balance > 0 && amount < address(this).balance, "Impossible");
@@ -63,7 +41,7 @@ contract EstateAgent {
 
     /**
      * @dev Set token address
-     *
+     * @param _newContract the address of the newly deployed SPACE token
      * In case if token address ever changes, we can set this contract to point there
      */
     function setToken(DecentramallToken _newContract) external onlyAdmin {
@@ -72,17 +50,8 @@ contract EstateAgent {
     }
 
     /**
-     * @dev Return token address
-     *
-     * In case if token address ever changes, we can set this contract to point there
-     */
-    function tokenAddress() external view returns(address) {
-        return(address(token));
-    }
-
-    /**
      * @dev Change the currentLimit variable (Max supply)
-     *
+     * @param limit the current token minting limit
      * Only admin(s) can change this variable
      */
     function setLimit(uint256 limit) public onlyAdmin{
@@ -92,10 +61,9 @@ contract EstateAgent {
 
     /**
      * @dev Get price of next token
-     *
+     * @param x the x value in the bonding curve graph
      * Assuming current bonding curve function of y = x^2 + basePrice
-     *
-     * Input is the x value
+     * @return price at the specific position in bonding curve
      */
     function price(uint256 x) public view returns(uint256) {
         return ((x ** 2) + _basePrice);
@@ -109,14 +77,11 @@ contract EstateAgent {
      * The price of the token is based on a bonding curve function
      */
     function buy() public payable {
-        require(token.totalSupply < _currentLimit, "Max supply reached!");
+        require(token.totalSupply() < _currentLimit, "Max supply reached!");
         uint256 supplyBefore = token.totalSupply();
         uint256 quotedPrice = price(supplyBefore + 1);
-        require(msg.value >= (quotedPrice * 1 ether), "Not enough funds to purchase token!");
-        uint256 tokenId = token.mint(msg.sender);
-        require (token.totalSupply() > supplyBefore, "Token did not mint!");
-        tokenHolder[msg.sender] = true;
-        tokenByOwner[msg.sender] = tokenId;
+
+        require(msg.value >= (quotedPrice * 1 finney), "Not enough funds to purchase token!");
         emit BuyToken(msg.sender, quotedPrice);
     }
 
@@ -124,24 +89,26 @@ contract EstateAgent {
      * @dev Sell a unique token
      *
      * Sell and burn the token that has been minted
-     *
-     * The price of the token is based on a bonding curve function
+     * @param tokenId the ID of the token being sold
+     * - The price of the token is based on a bonding curve function
+     * - Will check if token is legitimate
      */
-    function sell() public legitimateBuyer{
+    function sell(uint256 tokenId) public {
+        require(token.verifyLegitimacy(msg.sender, tokenId) == true, "Fake token!");
         uint256 supplyBefore = token.totalSupply();
         uint256 quotedPrice = price(supplyBefore);
+
         require(quotedPrice < address(this).balance, "Price can't be higher than balance");
-        token.burn(tokenByOwner[msg.sender]);
+        token.burn(tokenId);
+
         require(token.totalSupply() < supplyBefore, "Token did not burn");
-        tokenHolder[msg.sender] = false;
-        tokenByOwner[msg.sender] = 0;
         msg.sender.transfer(quotedPrice);
         emit SellToken(msg.sender, quotedPrice);
     }
 
     /**
      * @dev Add a new admin
-     *
+     * @param newAdmin the address of the admin to add
      * Only admin(s) can add new admin
      */
     function addAdmin(address newAdmin) public onlyAdmin{
@@ -151,7 +118,7 @@ contract EstateAgent {
 
     /**
      * @dev Remove admin
-     *
+     * @param oldAdmin the address of the admin to remove
      * Self explanatory
      */
     function removeAdmin(address oldAdmin) public onlyAdmin{
@@ -161,7 +128,7 @@ contract EstateAgent {
 
     /**
      * @dev Get currentLimit
-     *
+     * @return current minting limit
      * Only admin(s) can add new admin
      */
     function limit() public view returns(uint256){
@@ -170,6 +137,7 @@ contract EstateAgent {
 
     /**
      * @dev Get balance
+     * @return balance in EstateAgent contract
      */
     function balance() public view returns(uint256){
         return(address(this).balance);
