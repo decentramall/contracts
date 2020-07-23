@@ -119,7 +119,6 @@ contract EstateAgent is Administration{
     /**
      * @dev Get currentLimit
      * @return current minting limit
-     * Only admin(s) can add new admin
      */
     function limit() public view returns(uint256){
         return(_currentLimit);

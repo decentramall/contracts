@@ -5,6 +5,8 @@ import './EstateAgent.sol';
 import './DecentramallToken.sol';
 
 contract RentalAgent is Administration{
+
+    //Holds current detals about the SPACE
     struct SpaceDetails {
         address rightfulOwner;
         address rentedTo;
@@ -12,9 +14,13 @@ contract RentalAgent is Administration{
         uint256 expiryBlock;
     }
 
+    //Mapping of tokenId to SpaceDetails
     mapping(uint256 => SpaceDetails) public spaceInfo;
 
+    //Holds the address of the deployed token
     DecentramallToken public token;
+
+    //Holds the address of the EstateAgent
     EstateAgent public estateAgent;
 
     event SetToken(address _newContract);
@@ -81,16 +87,16 @@ contract RentalAgent is Administration{
     /**
     * @dev Allows users to rent a SPACE token of choice
     * @param tokenId ID of the token to check
+    * @notice rent cost 1/10 of the price to buy new & lasts for 1 year (2252571 blocks)
     **/
     function rent(uint256 tokenId) public payable{
         require(spaceInfo[tokenId].expiryBlock < block.number, "Token is already rented!");
-        //To rent, it costs 1/10 to buy new
-        uint256 rentPrice = (estateAgent.price(token.totalSupply() + 1 ) / 10);
-        require(msg.value >= (rentPrice * 1 finney), "Not enough funds!");
+        uint256 rentPrice = (estateAgent.price(token.totalSupply()+1) / 10);
 
+        require(msg.value >= (rentPrice * 1 finney), "Not enough funds!");
         spaceInfo[tokenId].rentedTo = msg.sender;
         spaceInfo[tokenId].rentalEarned += rentPrice;
-        spaceInfo[tokenId].expiryBlock = block.number + 2252571; //roughly 1 year
+        spaceInfo[tokenId].expiryBlock = block.number + 2252571;
     }
 
     /**
@@ -109,6 +115,7 @@ contract RentalAgent is Administration{
     /**
     * @dev Check who has the rights to use the token currently
     * @param tokenId ID of the token to check
+    * @return the address of who can use the SPACE
     **/
     function checkDelegatedOwner(uint256 tokenId) public view returns (address) {
         //Check if the token is being rented

@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.6.8;
 
+/** @title Administration contract
+  * @notice Allows for a contract to be owned & controlled by admins
+  */
 contract Administration{
     //Mapping of admins
     mapping (address => bool) public adminByAddress;
-    
+
     event AddAdmin(address newAdmin);
     event RemoveAdmin(address oldAdmin);
 
@@ -42,7 +45,7 @@ contract Administration{
     /**
      * @dev Verify Admin
      * @param admin the address of the admin to check
-     * Self explanatory
+     * @return true if the address is an admin, false otherwise
      */
     function verifyAdmin(address admin) public view returns(bool){
         return adminByAddress[admin];
