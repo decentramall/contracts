@@ -1,9 +1,6 @@
 const { BN, ether, expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const { expect } = require("chai");
-const Administration = artifacts.require("Administration");
-const DecentramallToken = artifacts.require("DecentramallToken");
 const EstateAgent = artifacts.require("EstateAgent");
-const RentalAgent = artifacts.require("RentalAgent");
 
 
 //Testing EstateAgent.sol
@@ -13,43 +10,45 @@ contract("EstateAgent", function (accounts) {
     const purchaser = accounts[2];
     const renter = accounts[3];
     const hacker = accounts[4];
+    let estateAgentTokenInstance;
 
     //Before each unit test  
     beforeEach(async function () {
-        this.estateAgentTokenInstance = await EstateAgent.new(10, 1);
+        estateAgentTokenInstance = await EstateAgent.new(10, 1);
     });
 
     it("Verify Admin", async function () {
-        expect(await this.estateAgentTokenInstance.verifyAdmin.call(admin, { from: admin })).to.be.equal(true);
+        expect(await estateAgentTokenInstance.verifyAdmin(admin, { from: admin })).to.be.equal(true);
     });
 
     it("Testing buy() function", async function () {
-        await this.estateAgentTokenInstance.buy({ from: agent, to: this.estateAgentTokenInstance.address, value: "2000000000000000000" })
-        let estateAgentBalance = await web3.eth.getBalance(this.estateAgentTokenInstance.address);
-        expect(estateAgentBalance).to.be.bignumber.equal((new BN('2000000000000000000')))
+        await estateAgentTokenInstance.buy({ from: agent, to: estateAgentTokenInstance.address, value: ether('2') })
+        let estateAgentBalance = await web3.eth.getBalance(estateAgentTokenInstance.address);
+        expect(estateAgentBalance).to.be.bignumber.equal(ether('2'))
     });
 
     it("Testing sell() function", async function () {
-        let tokenId = new BN("70359603190535945057867763346504887029712970002228617020990113934931004039163"); //Already checked previously
-        await this.estateAgentTokenInstance.buy({ from: purchaser, to: this.estateAgentTokenInstance.address, value: "1000000000000000000" })
+        const tx = await estateAgentTokenInstance.buy({ from: purchaser, to: estateAgentTokenInstance.address, value: ether('1') })
+        // get tokenid from BuyToken event
+        const tokenId = tx.logs[0].args[2].toString();
 
-        await this.estateAgentTokenInstance.sell(tokenId, { from: purchaser })
-        let estateAgentBalance = await web3.eth.getBalance(this.estateAgentTokenInstance.address);
-        expect(estateAgentBalance).to.be.bignumber.equal((new BN('998000000000000000')))
+        await estateAgentTokenInstance.sell(tokenId, { from: purchaser })
+        let estateAgentBalance = await web3.eth.getBalance(estateAgentTokenInstance.address);
+        expect(estateAgentBalance).to.be.bignumber.equal(ether('0.998'))
     });
 
     it("Testing withdraw() function", async function () {
         //transfering 2 ETH
-        await this.estateAgentTokenInstance.buy({ from: admin, to: this.estateAgentTokenInstance.address, value: "2000000000000000000" })
+        await estateAgentTokenInstance.buy({ from: admin, to: estateAgentTokenInstance.address, value: ether('2') })
 
         //check balance
-        let estateAgentBalanceBefore = await this.estateAgentTokenInstance.balance.call({ from: admin });
+        let estateAgentBalanceBefore = await estateAgentTokenInstance.balance({ from: admin });
         //withdraw 1 ETH
-        await this.estateAgentTokenInstance.withdraw(admin, "1000000000000000000", { from: admin });
+        await estateAgentTokenInstance.withdraw(admin, ether('1'), { from: admin });
 
         //recheck balance
-        let estateAgentBalanceAfter = await web3.eth.getBalance(this.estateAgentTokenInstance.address);
+        let estateAgentBalanceAfter = await web3.eth.getBalance(estateAgentTokenInstance.address);
         //assertion        
-        expect(estateAgentBalanceAfter).to.be.bignumber.equal((new BN('1000000000000000000')))
+        expect(estateAgentBalanceAfter).to.be.bignumber.equal(ether('1'))
     });
 });
