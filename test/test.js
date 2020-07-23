@@ -1,4 +1,5 @@
 const { BN, ether, expectRevert } = require("@openzeppelin/test-helpers");
+const truffleAssert = require('truffle-assertions');
 const { expect } = require("chai");
 const Administration = artifacts.require("Administration");
 const DecentramallToken = artifacts.require("DecentramallToken");
@@ -12,6 +13,7 @@ contract("DecentramallToken", function (accounts) {
     const purchaser = accounts[2];
     const renter = accounts[3];
     const hacker = accounts[4];
+    const legit = accounts[5];
 
     //Before each unit test  
     beforeEach(async function () {
@@ -51,13 +53,13 @@ contract("DecentramallToken", function (accounts) {
 
     it("Testing verifyLegitimacy() function", async function () {
         //store token id returned by function
-        const token = await this.decentramallTokenInstance.mint.call(purchaser, { from: agent });
+        const token = await this.decentramallTokenInstance.mint.call(legit, { from: agent });
 
         //mint
-        await this.decentramallTokenInstance.mint(purchaser, { from: agent });
+        await this.decentramallTokenInstance.mint(legit, { from: agent });
 
         //Verifying legitimacy
-        const legitimacy = await this.decentramallTokenInstance.verifyLegitimacy.call(purchaser, token);
+        const legitimacy = await this.decentramallTokenInstance.verifyLegitimacy.call(legit, token);
         expect(legitimacy).to.be.equal(true);
     });
 });
@@ -80,7 +82,7 @@ contract("EstateAgent", function (accounts) {
     });
 
     it("Testing buy() function", async function () {
-        await this.estateAgentTokenInstance.buy({ from: purchaser, to: this.estateAgentTokenInstance.address, value: "2000000000000000000" })
+        await this.estateAgentTokenInstance.buy({ from: agent, to: this.estateAgentTokenInstance.address, value: "2000000000000000000" })
         let estateAgentBalance = await web3.eth.getBalance(this.estateAgentTokenInstance.address);
         expect(estateAgentBalance).to.be.bignumber.equal((new BN('2000000000000000000')))
     });
@@ -118,20 +120,35 @@ contract("RentalAgent", function (accounts) {
     const purchaser = accounts[2];
     const renter = accounts[3];
     const hacker = accounts[4];
-
+    let tokenId = new BN("70359603190535945057867763346504887029712970002228617020990113934931004039163"); //Already checked previously
     //Before each unit test  
     beforeEach(async function () {
 
-        const EstateAgentContract = contract(EstateAgent);
-        this.estateAgentTokenInstance = await EstateAgentContract.new(10, 1);
-        const SpaceContract = contract(DecentramallToken);
-        this.tokenInstance = await SpaceContract.new(estateAgentTokenInstance);
-        this.rentalAgentTokenInstance = await RentalAgent.new(this.tokenInstance.address, this.estateAgentTokenInstance.address);
+        this.estateAgent = await EstateAgent.deployed();
+        let tokenAddress = await this.estateAgent.token.call({ from: admin });
+        this.token = await DecentramallToken.at(tokenAddress);
+        this.rentalAgentTokenInstance = await RentalAgent.new(this.token.address, this.estateAgent.address);
     });
 
     it("Verify Admin", async function () {
         expect(await this.rentalAgentTokenInstance.verifyAdmin.call(admin, { from: admin })).to.be.equal(true);
     });
+    it("Testing deposit() function", async function () {
+        //First, buy the token
+        await this.estateAgent.buy({ from: purchaser, to: this.estateAgent.address, value: "2000000000000000000" })
 
+        //Approve the transfer
+        await this.token.approve(this.rentalAgentTokenInstance.address, tokenId, { from: purchaser });
+
+        //Now deposit
+        await this.rentalAgentTokenInstance.deposit(tokenId, { from: purchaser })
+        expect(await this.rentalAgentTokenInstance.checkDelegatedOwner(tokenId, { from: purchaser })).to.be.equal(purchaser);
+    });
+    it("Testing withdrawSpace() function", async function () {
+
+        await this.rentalAgentTokenInstance.withdrawSpace(tokenId, { from: purchaser });
+
+        expect(await this.token.tokenOfOwnerByIndex(purchaser, 0, { from: purchaser })).to.be.equal(tokenId);
+    });
 
 });

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.6.8;
 
 import './EstateAgent.sol';
@@ -49,10 +50,11 @@ contract RentalAgent is Administration{
     /**
     * @dev Deposit the SPACE token to this contract
     * @param tokenId ID of the token to check
+    * @notice need to write an approve method
     **/
     function deposit(uint256 tokenId) public {
         require(token.verifyLegitimacy(msg.sender, tokenId) == true, "Fake token!");
-        token.safeTransferFrom(msg.sender, address(this), tokenId);
+        token.transferFrom(msg.sender, address(this), tokenId);
 
         //Register the rightful owner if first time user
         if(spaceInfo[tokenId].rightfulOwner == address(0)){
