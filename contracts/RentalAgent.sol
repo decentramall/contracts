@@ -123,24 +123,4 @@ contract RentalAgent is Administration{
             }
         }
     }
-
-    /**
-     * @dev Add a new admin
-     * @param newAdmin the address of the admin to add
-     * Only admin(s) can add new admin
-     */
-    function addAdmin(address newAdmin) public onlyAdmin{
-        adminByAddress[newAdmin] = true;
-        emit AddAdmin(newAdmin);
-    }
-
-    /**
-     * @dev Remove admin
-     * @param oldAdmin the address of the admin to remove
-     * Self explanatory
-     */
-    function removeAdmin(address oldAdmin) public onlyAdmin{
-        adminByAddress[oldAdmin] = false;
-        emit RemoveAdmin(oldAdmin);
-    }
 }
