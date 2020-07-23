@@ -2728,7 +2728,7 @@
                             "lValueRequested": false,
                             "memberName": "totalSupply",
                             "nodeType": "MemberAccess",
-                            "referencedDeclaration": 1472,
+                            "referencedDeclaration": 1491,
                             "src": "2829:17:2",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_external_view$__$returns$_t_uint256_$",
@@ -2894,7 +2894,7 @@
                       "lValueRequested": false,
                       "memberName": "totalSupply",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 1472,
+                      "referencedDeclaration": 1491,
                       "src": "2922:17:2",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_view$__$returns$_t_uint256_$",
@@ -3386,7 +3386,7 @@
                             "lValueRequested": false,
                             "memberName": "totalSupply",
                             "nodeType": "MemberAccess",
-                            "referencedDeclaration": 1472,
+                            "referencedDeclaration": 1491,
                             "src": "3168:17:2",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_external_view$__$returns$_t_uint256_$",
@@ -3900,7 +3900,7 @@
                       "lValueRequested": false,
                       "memberName": "totalSupply",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 1472,
+                      "referencedDeclaration": 1491,
                       "src": "3738:17:2",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_view$__$returns$_t_uint256_$",
@@ -4254,7 +4254,7 @@
                             "lValueRequested": false,
                             "memberName": "totalSupply",
                             "nodeType": "MemberAccess",
-                            "referencedDeclaration": 1472,
+                            "referencedDeclaration": 1491,
                             "src": "3952:17:2",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_external_view$__$returns$_t_uint256_$",
@@ -7371,7 +7371,7 @@
                             "lValueRequested": false,
                             "memberName": "totalSupply",
                             "nodeType": "MemberAccess",
-                            "referencedDeclaration": 1472,
+                            "referencedDeclaration": 1491,
                             "src": "2829:17:2",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_external_view$__$returns$_t_uint256_$",
@@ -7537,7 +7537,7 @@
                       "lValueRequested": false,
                       "memberName": "totalSupply",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 1472,
+                      "referencedDeclaration": 1491,
                       "src": "2922:17:2",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_view$__$returns$_t_uint256_$",
@@ -8029,7 +8029,7 @@
                             "lValueRequested": false,
                             "memberName": "totalSupply",
                             "nodeType": "MemberAccess",
-                            "referencedDeclaration": 1472,
+                            "referencedDeclaration": 1491,
                             "src": "3168:17:2",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_external_view$__$returns$_t_uint256_$",
@@ -8543,7 +8543,7 @@
                       "lValueRequested": false,
                       "memberName": "totalSupply",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 1472,
+                      "referencedDeclaration": 1491,
                       "src": "3738:17:2",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_view$__$returns$_t_uint256_$",
@@ -8897,7 +8897,7 @@
                             "lValueRequested": false,
                             "memberName": "totalSupply",
                             "nodeType": "MemberAccess",
-                            "referencedDeclaration": 1472,
+                            "referencedDeclaration": 1491,
                             "src": "3952:17:2",
                             "typeDescriptions": {
                               "typeIdentifier": "t_function_external_view$__$returns$_t_uint256_$",
@@ -9863,12 +9863,12 @@
         }
       },
       "links": {},
-      "address": "0xC267665260388037a2f4D25E391e965c86Fdb470",
-      "transactionHash": "0xaf7d41694cc03804894e23196742f431e010b77502aaf863617bceeb6c5b3775"
+      "address": "0x392d74D49175F7f72Bc3f579b793b7271A290d64",
+      "transactionHash": "0x3411e17e83717820c456d679cf5be7a17cfff0a01b0ae24e44845ff601b2f9f2"
     }
   },
   "schemaVersion": "3.2.2",
-  "updatedAt": "2020-07-23T10:27:47.408Z",
+  "updatedAt": "2020-07-23T11:00:32.219Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {

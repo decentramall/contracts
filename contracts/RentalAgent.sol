@@ -73,7 +73,8 @@ contract RentalAgent is Administration{
             spaceInfo[tokenId].expiryBlock < block.number &&
             spaceInfo[tokenId].rightfulOwner == msg.sender, "Token is rented / Not owner!"
         );
-        claimRent(tokenId);
+        address payable owner = msg.sender;
+        claimRent(owner, tokenId);
         token.safeTransferFrom(address(this), msg.sender, tokenId);
     }
 
@@ -97,12 +98,12 @@ contract RentalAgent is Administration{
     * @param tokenId id of the SPACE token
     * @notice Owner can claim rent right on Day 1 of renting
     **/
-    function claimRent(uint256 tokenId) public {
-        require(spaceInfo[tokenId].rightfulOwner == msg.sender, "Not owner!");
+    function claimRent(address payable owner, uint256 tokenId) public {
+        require(spaceInfo[tokenId].rightfulOwner == owner, "Not owner!");
         uint256 toClaim = spaceInfo[tokenId].rentalEarned;
-        require(address(this).balance >= toClaim, "Not enough funds to pay!");
+        require(balance() >= toClaim, "Not enough funds to pay!");
         spaceInfo[tokenId].rentalEarned -= toClaim;
-        msg.sender.transfer(toClaim);
+        owner.transfer(toClaim);
     }
 
     /**
@@ -124,5 +125,14 @@ contract RentalAgent is Administration{
                 return currentOwner;
             }
         }
+    }
+
+    /**
+     * @dev Get balance
+     * @return balance in RentalAgent contract
+     */
+    function balance() public view returns(uint256){
+        address self = address(this);
+        return self.balance;
     }
 }

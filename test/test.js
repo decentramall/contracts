@@ -120,6 +120,7 @@ contract("RentalAgent", function (accounts) {
     const purchaser = accounts[2];
     const renter = accounts[3];
     const hacker = accounts[4];
+    const newPurchaser = accounts[5];
     let tokenId = new BN("70359603190535945057867763346504887029712970002228617020990113934931004039163"); //Already checked previously
     //Before each unit test  
     beforeEach(async function () {
@@ -145,10 +146,23 @@ contract("RentalAgent", function (accounts) {
         expect(await this.rentalAgentTokenInstance.checkDelegatedOwner(tokenId, { from: purchaser })).to.be.equal(purchaser);
     });
     it("Testing withdrawSpace() function", async function () {
+        let newTokenId = new BN("15105111975255290057694733458188974452746103912949142486594252717011018707060");
 
-        await this.rentalAgentTokenInstance.withdrawSpace(tokenId, { from: purchaser });
+        //First, buy the token
+        await this.estateAgent.buy({ from: newPurchaser, to: this.estateAgent.address, value: "2000000000000000000" })
+        let ownerBefore = await this.token.ownerOf(newTokenId, { from: newPurchaser });
 
-        expect(await this.token.tokenOfOwnerByIndex(purchaser, 0, { from: purchaser })).to.be.equal(tokenId);
+        //Approve the transfer        
+        await this.token.approve(this.rentalAgentTokenInstance.address, newTokenId, { from: newPurchaser });
+
+        //Now deposit
+        await this.rentalAgentTokenInstance.deposit(newTokenId, { from: newPurchaser });
+
+        //Withdraw
+        await this.rentalAgentTokenInstance.withdrawSpace(newTokenId, { from: newPurchaser });
+        let ownerAfter = await this.token.ownerOf(newTokenId, { from: newPurchaser });
+
+        expect(ownerBefore).to.be.equal(ownerAfter);
     });
 
 });
