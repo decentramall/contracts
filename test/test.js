@@ -227,6 +227,6 @@ contract("Administration", function (accounts) {
     });
 
     it("Hacker fail to add admin", async function () {
-        await expectRevert(await this.administrationInstance.addAdmin(normalUser, { from: hacker }), 'Not an admin!');
+        await expectRevert(this.administrationInstance.addAdmin(normalUser, { from: hacker }), 'Not an admin!',);
     });
 });
