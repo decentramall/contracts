@@ -164,5 +164,19 @@ contract("RentalAgent", function (accounts) {
 
         expect(ownerBefore).to.be.equal(ownerAfter);
     });
+    it("Renter make rental", async function () {
+        //Rent
+        await this.rentalAgentTokenInstance.rent(tokenId, { from: renter, value: "2000000000000000000" })
 
+        expect(await this.rentalAgentTokenInstance.checkDelegatedOwner(tokenId, { from: renter })).to.be.equal(renter);
+        ;
+    });
+    it("Purchaser claim rental", async function () {
+        let balanceBefore = await web3.eth.getBalance(purchaser.address);
+        //Claim
+        await this.rentalAgentTokenInstance.claimRent(purchaser, tokenId, { from: purchaser })
+        let balanceAfter = await web3.eth.getBalance(purchaser.address);
+        expect(balanceBefore).to.be.equal(balanceAfter.sub(new BN("2000000000000000000")));
+        ;
+    });
 });

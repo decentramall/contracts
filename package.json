@@ -4,7 +4,7 @@
     "description": "This is the the contracts folder for decentramall!",
     "scripts": {
         "pretest": "truffle compile",
-        "test": "scripts/test.sh",
+        "test": "bash scripts/test.sh",
         "pretest:ci": "truffle compile",
         "test:ci": "CI=true scripts/test.sh",
         "coverage": "SOLIDITY_COVERAGE=true scripts/test.sh",
