@@ -1,0 +1,29 @@
+{
+    "name": "ddecentramall-smart-contracts",
+    "version": "0.0.0",
+    "description": "This is the the contracts folder for decentramall!",
+    "scripts": {
+        "pretest": "truffle compile",
+        "test": "scripts/test.sh",
+        "pretest:ci": "truffle compile",
+        "test:ci": "CI=true scripts/test.sh",
+        "coverage": "SOLIDITY_COVERAGE=true scripts/test.sh",
+        "coverage:ci": "CI=true SOLIDITY_COVERAGE=true scripts/test.sh"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "GPL-3.0-only",
+    "dependencies": {
+        "@openzeppelin/contracts": "3.1.0"
+    },
+    "devDependencies": {
+        "@openzeppelin/test-helpers": "0.5.6",
+        "@truffle/hdwallet-provider": "1.0.39",
+        "bignumber.js": "9.0.0",
+        "chai": "4.2.0",
+        "eth-gas-reporter": "0.2.17",
+        "ganache-cli": "6.9.1",
+        "solidity-coverage": "0.7.9",
+        "truffle": "5.1.35"
+    }
+}
