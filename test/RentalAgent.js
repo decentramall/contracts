@@ -14,71 +14,79 @@ contract("RentalAgent", function (accounts) {
     const renter = accounts[3];
     const hacker = accounts[4];
     const newPurchaser = accounts[5];
-    let tokenId = new BN("70359603190535945057867763346504887029712970002228617020990113934931004039163"); //Already checked previously
+    // let tokenId = new BN("70359603190535945057867763346504887029712970002228617020990113934931004039163"); //Already checked previously
+    let estateAgent;
+    let decentramallToken;
+    let rentalAgentTokenInstance;
     //Before each unit test  
     beforeEach(async function () {
-
-        this.estateAgent = await EstateAgent.deployed();
-        let tokenAddress = await this.estateAgent.token.call({ from: admin });
-        this.token = await DecentramallToken.at(tokenAddress);
-        this.rentalAgentTokenInstance = await RentalAgent.new(this.token.address, this.estateAgent.address);
+        estateAgent = await EstateAgent.new(10, 1);
+        decentramallToken = await DecentramallToken.at(
+            await estateAgent.token({ from: admin })
+        );
+        rentalAgentTokenInstance = await RentalAgent.new(decentramallToken.address, estateAgent.address);
     });
 
     it("Verify Admin", async function () {
-        expect(await this.rentalAgentTokenInstance.verifyAdmin.call(admin, { from: admin })).to.be.equal(true);
+        expect(await rentalAgentTokenInstance.verifyAdmin(admin, { from: admin })).to.be.equal(true);
     });
     it("Testing deposit() function", async function () {
         //First, buy the token
-        await this.estateAgent.buy({ from: purchaser, to: this.estateAgent.address, value: "2000000000000000000" })
+        const tx = await estateAgent.buy({ from: purchaser, to: estateAgent.address, value: ether('2') })
+        const tokenId = tx.logs[0].args[2].toString();
 
         //Approve the transfer
-        await this.token.approve(this.rentalAgentTokenInstance.address, tokenId, { from: purchaser });
+        await decentramallToken.approve(rentalAgentTokenInstance.address, tokenId, { from: purchaser });
 
         //Now deposit
-        await this.rentalAgentTokenInstance.deposit(tokenId, { from: purchaser });
-        expect(await this.rentalAgentTokenInstance.checkDelegatedOwner(tokenId, { from: purchaser })).to.be.equal(purchaser);
+        await rentalAgentTokenInstance.deposit(tokenId, { from: purchaser });
+        expect(await rentalAgentTokenInstance.checkDelegatedOwner(tokenId, { from: purchaser })).to.be.equal(purchaser);
     });
     it("Testing withdrawSpace() function", async function () {
-        let newTokenId = new BN("15105111975255290057694733458188974452746103912949142486594252717011018707060");
+        // let newTokenId = new BN("15105111975255290057694733458188974452746103912949142486594252717011018707060");
 
         //First, buy the token
-        await this.estateAgent.buy({ from: newPurchaser, to: this.estateAgent.address, value: "2000000000000000000" })
-        let ownerBefore = await this.token.ownerOf(newTokenId, { from: newPurchaser });
+        const tx = await estateAgent.buy({ from: newPurchaser, to: estateAgent.address, value: ether('2') })
+        const tokenId = tx.logs[0].args[2].toString();
+        let ownerBefore = await decentramallToken.ownerOf(tokenId, { from: newPurchaser });
 
         //Approve the transfer        
-        await this.token.approve(this.rentalAgentTokenInstance.address, newTokenId, { from: newPurchaser });
+        await decentramallToken.approve(rentalAgentTokenInstance.address, tokenId, { from: newPurchaser });
 
         //Now deposit
-        await this.rentalAgentTokenInstance.deposit(newTokenId, { from: newPurchaser });
+        await rentalAgentTokenInstance.deposit(tokenId, { from: newPurchaser });
 
         //Withdraw
-        await this.rentalAgentTokenInstance.withdrawSpace(newTokenId, { from: newPurchaser });
-        let ownerAfter = await this.token.ownerOf(newTokenId, { from: newPurchaser });
+        await rentalAgentTokenInstance.withdrawSpace(tokenId, { from: newPurchaser });
+        let ownerAfter = await decentramallToken.ownerOf(tokenId, { from: newPurchaser });
 
         expect(ownerBefore).to.be.equal(ownerAfter);
     });
     it("Renter make rental", async function () {
+        const tx = await estateAgent.buy({ from: newPurchaser, to: estateAgent.address, value: ether('2') })
+        const tokenId = tx.logs[0].args[2].toString();
         //Rent
-        await this.rentalAgentTokenInstance.rent(tokenId, { from: renter, value: "2000000000000000000" })
+        await rentalAgentTokenInstance.rent(tokenId, { from: renter, value: ether('2') })
 
-        expect(await this.rentalAgentTokenInstance.checkDelegatedOwner(tokenId, { from: renter })).to.be.equal(renter);
+        expect(await rentalAgentTokenInstance.checkDelegatedOwner(tokenId, { from: renter })).to.be.equal(renter);
     });
     it("newPurchaser claim rental", async function () {
-        let newTokenId = new BN("15105111975255290057694733458188974452746103912949142486594252717011018707060");
+        const tx1 = await estateAgent.buy({ from: newPurchaser, to: estateAgent.address, value: ether('2') })
+        const tokenId = tx1.logs[0].args[2].toString();
 
         //Approve the transfer        
-        await this.token.approve(this.rentalAgentTokenInstance.address, newTokenId, { from: newPurchaser });
+        await decentramallToken.approve(rentalAgentTokenInstance.address, tokenId, { from: newPurchaser });
 
         //Deposit again
-        await this.rentalAgentTokenInstance.deposit(newTokenId, { from: newPurchaser });
+        await rentalAgentTokenInstance.deposit(tokenId, { from: newPurchaser });
 
         //Rent
-        await this.rentalAgentTokenInstance.rent(newTokenId, { from: renter, value: "2000000000000000000" });
+        await rentalAgentTokenInstance.rent(tokenId, { from: renter, value: ether('2') });
 
         let oldBalance = await web3.eth.getBalance(newPurchaser);
 
         //Claim
-        const txInfo = await this.rentalAgentTokenInstance.claimRent(newPurchaser, newTokenId, { from: newPurchaser });
+        const txInfo = await rentalAgentTokenInstance.claimRent(newPurchaser, tokenId, { from: newPurchaser });
         let newBalance = await web3.eth.getBalance(newPurchaser);
 
         //Calculate tx cost

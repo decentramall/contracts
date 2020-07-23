@@ -4,7 +4,7 @@ pragma solidity ^0.6.8;
 import './DecentramallToken.sol';
 import './Administration.sol';
 
-contract EstateAgent is Administration{
+contract EstateAgent is Administration {
     //Max limit of tokens to be minted
     uint256 private _currentLimit;
 
