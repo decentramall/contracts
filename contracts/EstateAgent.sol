@@ -111,7 +111,7 @@ contract EstateAgent is Administration{
         
         require(token.totalSupply() < supplyBefore, "Token did not burn");
         address payable seller = msg.sender;
-        seller.transfer(quotedPrice);
+        seller.transfer(quotedPrice * 1 finney);
         emit SellToken(msg.sender, quotedPrice, tokenId);
     }
 

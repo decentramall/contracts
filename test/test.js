@@ -18,11 +18,6 @@ contract("DecentramallToken", function (accounts) {
         this.decentramallTokenInstance = await DecentramallToken.new(agent);
     });
 
-    // function mint(address purchaser) public onlyAgent returns(uint256){
-    //     uint256 tokenId = uint256(keccak256(abi.encodePacked(purchaser)));
-    //     _safeMint(purchaser, tokenId, "");
-    //     return (tokenId);
-    // }
     it("Testing mint() function", async function () {
         //store token id returned by function
         const token = await this.decentramallTokenInstance.mint.call(purchaser, { from: agent });
@@ -41,9 +36,6 @@ contract("DecentramallToken", function (accounts) {
         expect(legitimacy).to.be.equal(true);
     });
 
-    // function burn(uint256 tokenId) public onlyAgent{
-    //     _burn(tokenId);
-    // }
     it("Testing burn() function", async function () {
         //store token id returned by function
         const token = await this.decentramallTokenInstance.mint.call(purchaser, { from: agent });
@@ -57,9 +49,6 @@ contract("DecentramallToken", function (accounts) {
         expect(totalSupply).to.be.bignumber.equal(new BN(0));
     });
 
-    // function verifyLegitimacy(address sender, uint256 tokenId) public view returns (bool) {
-    //     return _exists(tokenId) && ownerOf(tokenId) == sender;
-    // }
     it("Testing verifyLegitimacy() function", async function () {
         //store token id returned by function
         const token = await this.decentramallTokenInstance.mint.call(purchaser, { from: agent });
@@ -98,20 +87,13 @@ contract("EstateAgent", function (accounts) {
 
     it("Testing sell() function", async function () {
         let tokenId = new BN("70359603190535945057867763346504887029712970002228617020990113934931004039163"); //Already checked previously
-        await this.estateAgentTokenInstance.buy({ from: purchaser, to: this.estateAgentTokenInstance.address, value: "7000000000000000000" })
-        console.log(await this.estateAgentTokenInstance.price.call(1, { from: purchaser }))
-        let estateAgentBalance = await web3.eth.getBalance(this.estateAgentTokenInstance.address);
-        console.log("Before : " + estateAgentBalance)
+        await this.estateAgentTokenInstance.buy({ from: purchaser, to: this.estateAgentTokenInstance.address, value: "1000000000000000000" })
+
         await this.estateAgentTokenInstance.sell(tokenId, { from: purchaser })
-        expect(estateAgentBalance).to.be.bignumber.equal((new BN('5000000000000000000')))
+        let estateAgentBalance = await web3.eth.getBalance(this.estateAgentTokenInstance.address);
+        expect(estateAgentBalance).to.be.bignumber.equal((new BN('998000000000000000')))
     });
 
-
-    // function withdraw(address payable to, uint256 amount) external onlyAdmin{
-    //     require(address(this).balance > 0 && amount < address(this).balance, "Impossible");
-    //     to.transfer(amount);
-    //     emit Withdraw(to, amount);
-    // }
     it("Testing withdraw() function", async function () {
         //transfering 2 ETH
         await this.estateAgentTokenInstance.buy({ from: admin, to: this.estateAgentTokenInstance.address, value: "2000000000000000000" })
@@ -126,8 +108,6 @@ contract("EstateAgent", function (accounts) {
         //assertion        
         expect(estateAgentBalanceAfter).to.be.bignumber.equal((new BN('1000000000000000000')))
     });
-
-    //ERROR CONTRACT CAN'T RECEIVE ETH
 });
 
 
@@ -146,7 +126,7 @@ contract("RentalAgent", function (accounts) {
         this.estateAgentTokenInstance = await EstateAgentContract.new(10, 1);
         const SpaceContract = contract(DecentramallToken);
         this.tokenInstance = await SpaceContract.new(estateAgentTokenInstance);
-        this.rentalAgentTokenInstance = await RentalAgent.new(tokenInstance.address, estateAgentTokenInstance.address);
+        this.rentalAgentTokenInstance = await RentalAgent.new(this.tokenInstance.address, this.estateAgentTokenInstance.address);
     });
 
     it("Verify Admin", async function () {
