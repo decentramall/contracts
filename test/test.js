@@ -1,5 +1,4 @@
-const { BN, ether, expectRevert } = require("@openzeppelin/test-helpers");
-const truffleAssert = require('truffle-assertions');
+const { BN, ether, expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const { expect } = require("chai");
 const Administration = artifacts.require("Administration");
 const DecentramallToken = artifacts.require("DecentramallToken");
@@ -142,7 +141,7 @@ contract("RentalAgent", function (accounts) {
         await this.token.approve(this.rentalAgentTokenInstance.address, tokenId, { from: purchaser });
 
         //Now deposit
-        await this.rentalAgentTokenInstance.deposit(tokenId, { from: purchaser })
+        await this.rentalAgentTokenInstance.deposit(tokenId, { from: purchaser });
         expect(await this.rentalAgentTokenInstance.checkDelegatedOwner(tokenId, { from: purchaser })).to.be.equal(purchaser);
     });
     it("Testing withdrawSpace() function", async function () {
@@ -169,14 +168,65 @@ contract("RentalAgent", function (accounts) {
         await this.rentalAgentTokenInstance.rent(tokenId, { from: renter, value: "2000000000000000000" })
 
         expect(await this.rentalAgentTokenInstance.checkDelegatedOwner(tokenId, { from: renter })).to.be.equal(renter);
-        ;
     });
-    it("Purchaser claim rental", async function () {
-        let balanceBefore = await web3.eth.getBalance(purchaser.address);
+    it("newPurchaser claim rental", async function () {
+        let newTokenId = new BN("15105111975255290057694733458188974452746103912949142486594252717011018707060");
+
+        //Approve the transfer        
+        await this.token.approve(this.rentalAgentTokenInstance.address, newTokenId, { from: newPurchaser });
+
+        //Deposit again
+        await this.rentalAgentTokenInstance.deposit(newTokenId, { from: newPurchaser });
+
+        //Rent
+        await this.rentalAgentTokenInstance.rent(newTokenId, { from: renter, value: "2000000000000000000" });
+
+        let oldBalance = await web3.eth.getBalance(newPurchaser);
+
         //Claim
-        await this.rentalAgentTokenInstance.claimRent(purchaser, tokenId, { from: purchaser })
-        let balanceAfter = await web3.eth.getBalance(purchaser.address);
-        expect(balanceBefore).to.be.equal(balanceAfter.sub(new BN("2000000000000000000")));
-        ;
+        const txInfo = await this.rentalAgentTokenInstance.claimRent(newPurchaser, newTokenId, { from: newPurchaser });
+        let newBalance = await web3.eth.getBalance(newPurchaser);
+
+        //Calculate tx cost
+        const tx = await web3.eth.getTransaction(txInfo.tx);
+        const gasCost = tx.gasPrice * txInfo.receipt.gasUsed;
+
+        const properBalance = newBalance - gasCost + 1000000000000000;
+        expect(properBalance > oldBalance).to.be.equal(true);
+    });
+});
+
+//Testing Administration.sol
+contract("Administration", function (accounts) {
+    const admin = accounts[0];
+    const newAdmin = accounts[1];
+    const normalUser = accounts[2];
+    const hacker = accounts[3];
+
+    //Before each unit test  
+    beforeEach(async function () {
+        this.administrationInstance = await EstateAgent.deployed();
+    });
+
+    it("Verify Admin", async function () {
+        expect(await this.administrationInstance.verifyAdmin.call(admin, { from: admin })).to.be.equal(true);
+    });
+
+    it("newAdmin not admin yet", async function () {
+        expect(await this.administrationInstance.verifyAdmin.call(newAdmin, { from: admin })).to.be.equal(false);
+    });
+
+    it("newAdmin is now admin", async function () {
+        await this.administrationInstance.addAdmin(newAdmin, { from: admin });
+        expect(await this.administrationInstance.verifyAdmin.call(newAdmin, { from: admin })).to.be.equal(true);
+    });
+
+    it("Remove newAdmin", async function () {
+        await this.administrationInstance.removeAdmin(newAdmin, { from: admin });
+        expect(await this.administrationInstance.verifyAdmin.call(newAdmin, { from: admin })).to.be.equal(false);
+    });
+
+    it("Hacker fail to add admin", async function () {
+        await expectRevert(await this.administrationInstance.addAdmin(normalUser, { from: hacker }), 'Not an admin!');
     });
 });

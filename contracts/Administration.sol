@@ -12,7 +12,7 @@ contract Administration{
     event RemoveAdmin(address oldAdmin);
 
     modifier onlyAdmin {
-        require(adminByAddress[msg.sender] == true, "Not an admin!");
+        require(adminByAddress[msg.sender] == true, 'Not an admin!');
         _;
     }
 

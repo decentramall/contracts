@@ -26,7 +26,8 @@ contract RentalAgent is Administration{
     event SetToken(address _newContract);
     event SetAgent(address _newContract);
     event Deposit(address from, uint256 tokenId);
-    event Rented(address renter, uint256 tokenId);
+    event Rented(address renter, uint256 tokenId, uint256 rentPrice);
+    event ClaimRent(address owner, uint256 amount, uint256 toClaim);
     event Withdraw(address to, uint256 tokenId);
 
     constructor(DecentramallToken _token, EstateAgent _estateAgent) public {
@@ -97,6 +98,7 @@ contract RentalAgent is Administration{
         spaceInfo[tokenId].rentedTo = msg.sender;
         spaceInfo[tokenId].rentalEarned += rentPrice;
         spaceInfo[tokenId].expiryBlock = block.number + 2252571;
+        emit Rented(msg.sender, tokenId, rentPrice);
     }
 
     /**
@@ -109,7 +111,8 @@ contract RentalAgent is Administration{
         uint256 toClaim = spaceInfo[tokenId].rentalEarned;
         require(balance() >= toClaim, "Not enough funds to pay!");
         spaceInfo[tokenId].rentalEarned -= toClaim;
-        owner.transfer(toClaim);
+        owner.transfer(toClaim * 1 finney);
+        emit ClaimRent(owner, tokenId, toClaim);
     }
 
     /**
