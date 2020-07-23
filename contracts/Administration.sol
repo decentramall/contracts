@@ -4,7 +4,7 @@ pragma solidity ^0.6.8;
 /** @title Administration contract
   * @notice Allows for a contract to be owned & controlled by admins
   */
-contract Administration{
+contract Administration {
     //Mapping of admins
     mapping (address => bool) public adminByAddress;
 
