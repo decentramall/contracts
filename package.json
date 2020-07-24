@@ -5,7 +5,7 @@
     "scripts": {
         "pretest": "truffle compile",
         "test": "scripts/test.sh",
-        "dev": "truffle migrate --reset && truffle test --network development",
+        "dev": "truffle test --network development",
         "pretest:ci": "truffle compile",
         "test:ci": "CI=true scripts/test.sh",
         "coverage": "SOLIDITY_COVERAGE=true scripts/test.sh",

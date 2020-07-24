@@ -1,7 +1,8 @@
 const { BN, ether, expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const { expect } = require("chai");
+const { web3 } = require("@openzeppelin/test-helpers/src/setup");
 const EstateAgent = artifacts.require("EstateAgent");
-
+const DecentramallToken = artifacts.require("DecentramallToken");
 
 //Testing EstateAgent.sol
 contract("EstateAgent", function (accounts) {
@@ -34,7 +35,7 @@ contract("EstateAgent", function (accounts) {
 
         await estateAgentTokenInstance.sell(tokenId, { from: purchaser })
         let estateAgentBalance = await web3.eth.getBalance(estateAgentTokenInstance.address);
-        expect(estateAgentBalance).to.be.bignumber.equal(ether('0.998'))
+        expect(estateAgentBalance).to.be.bignumber.equal(ether('0.98'))
     });
 
     it("Testing withdraw() function", async function () {
@@ -50,5 +51,26 @@ contract("EstateAgent", function (accounts) {
         let estateAgentBalanceAfter = await web3.eth.getBalance(estateAgentTokenInstance.address);
         //assertion        
         expect(estateAgentBalanceAfter).to.be.bignumber.equal(ether('1'))
+    });
+
+    it("Check limit()", async function () {
+        //Check if limit is 10 based on the value entered during deployment
+        const newLimit = new BN("100");
+        await estateAgentTokenInstance.setLimit(newLimit, { from: admin });
+        expect(await estateAgentTokenInstance.limit.call({ from: admin })).to.be.bignumber.equal("100");
+    });
+
+    it("Set new token contract", async function () {
+        this.decentramallTokenInstance = await DecentramallToken.new(agent);
+
+        await estateAgentTokenInstance.setToken(this.decentramallTokenInstance.address, { from: admin });
+        expect(await estateAgentTokenInstance.token.call({ from: admin })).to.be.equal(this.decentramallTokenInstance.address);
+    });
+
+    it("Test receive() function", async function () {
+        const oldBalance = await web3.eth.getBalance(estateAgentTokenInstance.address);
+        await web3.eth.sendTransaction({ from: admin, to: estateAgentTokenInstance.address, value: ether('1') });
+        const newBalance = await web3.eth.getBalance(estateAgentTokenInstance.address);
+        expect(newBalance > oldBalance).to.be.equal(true);
     });
 });

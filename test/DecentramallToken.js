@@ -1,9 +1,6 @@
 const { BN, ether, expectRevert, expectEvent } = require("@openzeppelin/test-helpers");
 const { expect } = require("chai");
-const Administration = artifacts.require("Administration");
 const DecentramallToken = artifacts.require("DecentramallToken");
-const EstateAgent = artifacts.require("EstateAgent");
-const RentalAgent = artifacts.require("RentalAgent");
 
 //Testing DecentramallToken.sol
 contract("DecentramallToken", function (accounts) {

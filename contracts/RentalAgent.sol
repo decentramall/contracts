@@ -6,6 +6,9 @@ import './DecentramallToken.sol';
 
 contract RentalAgent is Administration{
 
+    //TEMPORARY Multiplier to get price in 10 Finney
+    uint256 private _multiplier = 10000000000000000;
+
     //Holds current detals about the SPACE
     struct SpaceDetails {
         address rightfulOwner;
@@ -37,21 +40,21 @@ contract RentalAgent is Administration{
 
     /**
      * @dev Set token address
-     * @param spaceToken the address of the newly deployed SPACE token
+     * @param _token the address of the newly deployed SPACE token
      * In case if token address ever changes, we can set this contract to point there
      */
-    function setToken(DecentramallToken spaceToken) external onlyAdmin {
-        token = spaceToken;
-        emit SetToken(address(spaceToken));
+    function setToken(DecentramallToken _token) external onlyAdmin {
+        token = _token;
+        emit SetToken(address(_token));
     }
 
     /**
      * @dev Set EstateAgent address
-     * @param estateContract the address of the EstateAgent
+     * @param _estateAgent the address of the EstateAgent
      */
-    function setAgent(EstateAgent estateContract) external onlyAdmin {
-        estateAgent = estateContract;
-        emit SetAgent(address(estateContract));
+    function setAgent(EstateAgent _estateAgent) external onlyAdmin {
+        estateAgent = _estateAgent;
+        emit SetAgent(address(_estateAgent));
     }
 
     /**
@@ -92,9 +95,9 @@ contract RentalAgent is Administration{
     **/
     function rent(uint256 tokenId) public payable{
         require(spaceInfo[tokenId].expiryBlock < block.number, "Token is already rented!");
-        uint256 rentPrice = (estateAgent.price(token.totalSupply()+1) / 10);
-
-        require(msg.value >= (rentPrice * 1 finney), "Not enough funds!");
+        uint256 priceFinney = estateAgent.price(token.totalSupply()+1) * _multiplier;
+        uint256 rentPrice = priceFinney / 10; //In wei
+        require(msg.value >= (rentPrice * 1 wei), "Not enough funds!");
         spaceInfo[tokenId].rentedTo = msg.sender;
         spaceInfo[tokenId].rentalEarned += rentPrice;
         spaceInfo[tokenId].expiryBlock = block.number + 2252571;
@@ -111,7 +114,7 @@ contract RentalAgent is Administration{
         uint256 toClaim = spaceInfo[tokenId].rentalEarned;
         require(balance() >= toClaim, "Not enough funds to pay!");
         spaceInfo[tokenId].rentalEarned -= toClaim;
-        owner.transfer(toClaim * 1 finney);
+        owner.transfer(toClaim * 1 wei);
         emit ClaimRent(owner, tokenId, toClaim);
     }
 

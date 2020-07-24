@@ -11,6 +11,9 @@ contract EstateAgent is Administration {
     //Base price to start
     uint256 private _basePrice;
 
+    //TEMPORARY Multiplier to get price in 10 Finney
+    uint256 private _multiplier = 10000000000000000;
+
     DecentramallToken public token;
 
     event TokenCreated(address token);
@@ -85,9 +88,9 @@ contract EstateAgent is Administration {
     function buy() public payable {
         require(token.totalSupply() < _currentLimit, "Max supply reached!");
         uint256 supplyBefore = token.totalSupply();
-        uint256 quotedPrice = price(supplyBefore + 1);
+        uint256 quotedPrice = price(supplyBefore + 1) * _multiplier;
 
-        require(msg.value >= (quotedPrice * 1 finney), "Not enough funds to purchase token!");
+        require(msg.value >= (quotedPrice * 1 wei), "Not enough funds to purchase token!");
         uint256 tokenId = token.mint(msg.sender);
 
         require (token.totalSupply() > supplyBefore, "Token did not mint!");
@@ -105,14 +108,14 @@ contract EstateAgent is Administration {
     function sell(uint256 tokenId) public {
         require(token.verifyLegitimacy(msg.sender, tokenId) == true, "Fake token!");
         uint256 supplyBefore = token.totalSupply();
-        uint256 quotedPrice = price(supplyBefore);
+        uint256 quotedPrice = price(supplyBefore) * _multiplier;
 
         require(quotedPrice <= balance(), "Price can't be higher than balance");
         token.burn(tokenId);
         
         require(token.totalSupply() < supplyBefore, "Token did not burn");
         address payable seller = msg.sender;
-        seller.transfer(quotedPrice * 1 finney);
+        seller.transfer(quotedPrice * 1 wei);
         emit SellToken(msg.sender, quotedPrice, tokenId);
     }
 
@@ -121,7 +124,7 @@ contract EstateAgent is Administration {
      * @return current minting limit
      */
     function limit() public view returns(uint256){
-        return(_currentLimit);
+        return _currentLimit;
     }
 
     /**
