@@ -2,6 +2,8 @@
 This section contains the Ethereum smart contracts for the Decentramall Project. We use [Truffle](https://github.com/trufflesuite/truffle) as a development environment for compiling, testing, and deploying our contracts. They were written in [Solidity](https://github.com/ethereum/solidity).
 <br/><br/>
 
+[![Build Status](https://travis-ci.org/decentramall/decentramall.svg?branch=master)](https://travis-ci.org/decentramall/decentramall)
+
 ## Idea
 The idea is for an owner to purchase a retail SPACE whose price follows a bonding curve. An owner can only own one SPACE 
 token, preventing anyone from gaining control of the entire mall by purchasing all the SPACE available
