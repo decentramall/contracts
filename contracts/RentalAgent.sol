@@ -26,12 +26,12 @@ contract RentalAgent is Administration{
     //Holds the address of the EstateAgent
     EstateAgent public estateAgent;
 
-    event SetToken(address _newContract);
-    event SetAgent(address _newContract);
-    event Deposit(address from, uint256 tokenId);
-    event Rented(address renter, uint256 tokenId, uint256 rentPrice);
-    event ClaimRent(address owner, uint256 amount, uint256 toClaim);
-    event Withdraw(address to, uint256 tokenId);
+    event SetToken(address indexed _newContract);
+    event SetAgent(address indexed _newContract);
+    event Deposit(address indexed from, uint256 tokenId);
+    event Rented(address indexed renter, uint256 tokenId, uint256 rentPrice);
+    event ClaimRent(address indexed owner, uint256 amount, uint256 toClaim);
+    event Withdraw(address indexed to, uint256 tokenId);
 
     constructor(DecentramallToken _token, EstateAgent _estateAgent) public {
         token = _token;

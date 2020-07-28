@@ -18,10 +18,10 @@ contract EstateAgent is Administration {
 
     event SetToken(DecentramallToken newContract);
     event SetLimit(uint256 limit);
-    event Withdraw(address to, uint256 amount);
-    event BuyToken(address buyer, uint256 price, uint256 tokenId);
-    event SellToken(address seller, uint256 price, uint256 tokenId);
-    event Received(address sender, uint256 value);
+    event Withdraw(address indexed to, uint256 amount);
+    event BuyToken(address indexed buyer, uint256 price, uint256 tokenId);
+    event SellToken(address indexed seller, uint256 price, uint256 tokenId);
+    event Received(address indexed sender, uint256 value);
 
     constructor(uint256 currentLimit, uint256 basePrice) public{
         _currentLimit = currentLimit;
