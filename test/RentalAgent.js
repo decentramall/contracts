@@ -20,9 +20,9 @@ contract("RentalAgent", function (accounts) {
     //Before each unit test  
     beforeEach(async function () {
         estateAgent = await EstateAgent.new(10, 1);
-        decentramallToken = await DecentramallToken.at(
-            await estateAgent.token({ from: admin })
-        );
+        decentramallToken = await DecentramallToken.new(estateAgent.address);
+        await estateAgent.setToken(decentramallToken.address, { from: admin });
+
         rentalAgentTokenInstance = await RentalAgent.new(decentramallToken.address, estateAgent.address);
     });
 

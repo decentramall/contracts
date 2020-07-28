@@ -16,7 +16,6 @@ contract EstateAgent is Administration {
 
     DecentramallToken public token;
 
-    event TokenCreated(address token);
     event SetToken(DecentramallToken newContract);
     event SetLimit(uint256 limit);
     event Withdraw(address to, uint256 amount);
@@ -25,11 +24,8 @@ contract EstateAgent is Administration {
     event Received(address sender, uint256 value);
 
     constructor(uint256 currentLimit, uint256 basePrice) public{
-        token = new DecentramallToken(address(this));
-
         _currentLimit = currentLimit;
         _basePrice = basePrice;
-        emit TokenCreated(address(token));
     }
 
     receive() external payable {

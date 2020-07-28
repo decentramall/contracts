@@ -2,7 +2,6 @@ const Administration = artifacts.require("Administration");
 const DecentramallToken = artifacts.require("DecentramallToken");
 const EstateAgent = artifacts.require("EstateAgent");
 const RentalAgent = artifacts.require("RentalAgent");
-const agent = '0xfe54a4bf10e879fc18b0facc4c8c3c72f9e082c5'; //ONE OF YOUR LOCAL BLOCKCHAIN ADDRESS
 
 module.exports = function (deployer, network, accounts) {
   if (network !== 'development' && network !== 'coverage') {
@@ -14,12 +13,15 @@ module.exports = function (deployer, network, accounts) {
       //Wait till deployed
       this.estateAgent = await EstateAgent.deployed();
 
-      //Get the address of the deployed token contract within EstateAgent
-      let tokenAddress = await this.estateAgent.token.call({ from: admin });
-      this.token = await DecentramallToken.at(tokenAddress);
+      //Deploy token with estate agent as the agent
+      await deployer.deploy(DecentramallToken, this.estateAgent.address);
+      this.token = await DecentramallToken.deployed();
+
+      //Set token address to estateAgent
+      await this.estateAgent.setToken(this.token.address, { from: '0x7371F37B1eCEC1e859285d31DAeE4380F20A412E' });
 
       //Use both the address in RentalAgent contract
-      await deployer.deploy(RentalAgent, this.token.address, EstateAgent.address);
+      await deployer.deploy(RentalAgent, this.token.address, this.estateAgent.address);
     });
   }
 };

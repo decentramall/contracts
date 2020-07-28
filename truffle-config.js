@@ -18,11 +18,11 @@
  *
  */
 
-// const fs = require('fs');
+const fs = require('fs');
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 
-const infuraKey = 'fj4jll3k.....';
-const mnemonic = ''; // fs.readFileSync('.secret').toString().trim();
+const infuraKey = fs.readFileSync('.infura_key').toString().trim();
+const mnemonic = fs.readFileSync('.secret').toString().trim();
 
 module.exports = {
   /**
@@ -62,12 +62,15 @@ module.exports = {
     goerli: {
       provider: () => new HDWalletProvider(mnemonic, `https://goerli.infura.io/v3/${infuraKey}`),
       network_id: 5, // goerli's id
+      networkCheckTimeout: 10000000,
+      gas: 4712388,
+      gasPrice: 2000000000,
     },
   },
 
   // Set default mocha options here, use special reporters etc.
   mocha: {
-    timeout: 100000,
+    timeout: 1000000,
     reporter: 'eth-gas-reporter',
   },
 

@@ -12,10 +12,13 @@ contract("EstateAgent", function (accounts) {
     const renter = accounts[3];
     const hacker = accounts[4];
     let estateAgentTokenInstance;
+    let decentramallTokenInstance;
 
     //Before each unit test  
     beforeEach(async function () {
         estateAgentTokenInstance = await EstateAgent.new(10, 1);
+        decentramallTokenInstance = await DecentramallToken.new(estateAgentTokenInstance.address);
+        await estateAgentTokenInstance.setToken(decentramallTokenInstance.address, { from: admin });
     });
 
     it("Verify Admin", async function () {

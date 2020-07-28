@@ -106,6 +106,9 @@ typings/
 # the .secret
 .secret
 
+# the .infura_key
+.infura_key
+
 # ignore types
 types/
 
