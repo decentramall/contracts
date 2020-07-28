@@ -18,7 +18,7 @@ module.exports = function (deployer, network, accounts) {
       this.token = await DecentramallToken.deployed();
 
       //Set token address to estateAgent
-      await this.estateAgent.setToken(this.token.address, { from: '0x7371F37B1eCEC1e859285d31DAeE4380F20A412E' });
+      await this.estateAgent.setToken(this.token.address, { from: accounts[0] });
 
       //Use both the address in RentalAgent contract
       await deployer.deploy(RentalAgent, this.token.address, this.estateAgent.address);
