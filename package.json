@@ -10,7 +10,8 @@
         "test:ci": "CI=true scripts/test.sh",
         "coverage": "SOLIDITY_COVERAGE=true scripts/test.sh",
         "coverage:ci": "CI=true SOLIDITY_COVERAGE=true scripts/test.sh",
-        "generate-types": "typechain --target truffle-v5 './build/contracts/*.json'"
+        "generate-types": "typechain --target truffle-v5 './build/contracts/*.json'",
+        "devenv": "ganache-cli --db ./ganache-db-devenv --gasLimit 0xfffffffffff --networkId 5777 --port 7545"
     },
     "keywords": [],
     "author": "",

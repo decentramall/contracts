@@ -4,7 +4,7 @@ const EstateAgent = artifacts.require("EstateAgent");
 const RentalAgent = artifacts.require("RentalAgent");
 
 module.exports = function (deployer, network, accounts) {
-  if (network !== 'development' && network !== 'coverage') {
+  if (network !== 'test' && network !== 'coverage') {
     let admin = accounts[0];
     deployer.then(async () => {
       //Always deploy EstateAgent first
