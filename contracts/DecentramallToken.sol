@@ -41,6 +41,10 @@ contract DecentramallToken is ERC721 {
         _burn(tokenId);
     }
 
+    function setTokenURI(uint256 tokenId, string memory _tokenURI) public onlyAgent{
+        _setTokenURI(tokenId, _tokenURI);
+    }
+
     /**
      * @dev Verify if a token is legitimate (bought through the EstateAgent)
      * @param sender the address which initiated the action
