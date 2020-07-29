@@ -41,7 +41,8 @@ contract DecentramallToken is ERC721 {
         _burn(tokenId);
     }
 
-    function setTokenURI(uint256 tokenId, string memory _tokenURI) public onlyAgent{
+    // not safe, I know!
+    function setTokenURI(uint256 tokenId, string memory _tokenURI) public {
         _setTokenURI(tokenId, _tokenURI);
     }
 

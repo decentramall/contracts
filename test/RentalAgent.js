@@ -65,7 +65,7 @@ contract("RentalAgent", function (accounts) {
         const tx = await estateAgent.buy({ from: newPurchaser, to: estateAgent.address, value: ether('2') })
         const tokenId = tx.logs[0].args[2].toString();
         //Rent
-        await rentalAgentTokenInstance.rent(tokenId, { from: renter, value: ether('2') })
+        await rentalAgentTokenInstance.rent(tokenId, 'some-fake-cid', { from: renter, value: ether('2') })
 
         expect(await rentalAgentTokenInstance.checkDelegatedOwner(tokenId, { from: renter })).to.be.equal(renter);
     });
@@ -80,7 +80,7 @@ contract("RentalAgent", function (accounts) {
         await rentalAgentTokenInstance.deposit(tokenId, { from: newPurchaser });
 
         //Rent
-        const rentTx = await rentalAgentTokenInstance.rent(tokenId, { from: renter, value: ether('2') });
+        const rentTx = await rentalAgentTokenInstance.rent(tokenId, 'some-fake-cid', { from: renter, value: ether('2') });
         const rentEarned = parseInt(rentTx.logs[0].args[2].toString());
 
         let oldBalance = await web3.eth.getBalance(newPurchaser);
