@@ -10,7 +10,7 @@
         "test:ci": "CI=true scripts/test.sh",
         "coverage": "SOLIDITY_COVERAGE=true scripts/test.sh",
         "coverage:ci": "CI=true SOLIDITY_COVERAGE=true scripts/test.sh",
-        "generate-types": "typechain --target truffle-v5 './build/contracts/*.json'",
+        "generate-types": "typechain --target truffle-v5 \"./build/contracts/*.json\"",
         "predevenv": "sleep 5 && truffle deploy --network development --reset &",
         "devenv": "ganache-cli --mnemonic \"hood return pride refuse resemble connect initial\" --gasLimit 0xfffffffffff --networkId 1337 --port 8545"
     },
