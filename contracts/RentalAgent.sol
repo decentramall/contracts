@@ -91,16 +91,16 @@ contract RentalAgent is Administration{
     /**
     * @dev Allows users to rent a SPACE token of choice
     * @param tokenId ID of the token to check
-    * @notice rent cost 1/10 of the price to buy new & lasts for 1 year (2252571 blocks)
+    * @notice rent per year cost 1/10 of the price to buy new & lasts for 1 month (187714 blocks)
     **/
     function rent(uint256 tokenId, string memory _tokenURI) public payable{
         require(spaceInfo[tokenId].expiryBlock < block.number, "Token is already rented!");
         uint256 priceFinney = estateAgent.price(token.totalSupply()+1) * _multiplier;
-        uint256 rentPrice = priceFinney / 10; //In wei
+        uint256 rentPrice = priceFinney / 120; //In wei
         require(msg.value >= (rentPrice * 1 wei), "Not enough funds!");
         spaceInfo[tokenId].rentedTo = msg.sender;
         spaceInfo[tokenId].rentalEarned += rentPrice;
-        spaceInfo[tokenId].expiryBlock = block.number + 2252571;
+        spaceInfo[tokenId].expiryBlock = block.number + 187714;
         token.setTokenURI(tokenId, _tokenURI);
         emit Rented(msg.sender, tokenId, rentPrice);
     }
