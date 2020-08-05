@@ -13,6 +13,10 @@ contract("RentalAgent", function (accounts) {
     const renter = accounts[3];
     const user = accounts[4];
     const newPurchaser = accounts[5];
+    const buy1 = accounts[6];
+    const buy2 = accounts[7];
+    const rent1 = accounts[8];
+    const rent2 = accounts[9];
     // let tokenId = new BN("70359603190535945057867763346504887029712970002228617020990113934931004039163"); //Already checked previously
     let estateAgent;
     let decentramallToken;
@@ -115,5 +119,22 @@ contract("RentalAgent", function (accounts) {
         const tx1 = await estateAgent.buy({ from: user, to: estateAgent.address, value: ether('2') })
         const tokenId = tx1.logs[0].args[2].toString();
         expect(await rentalAgentTokenInstance.checkDelegatedOwner.call(tokenId, { from: admin })).to.be.equal(user);
+    });
+    it("Should let me rent a total of two times", async function () {
+        const tx = await estateAgent.buy({ from: buy1, to: estateAgent.address, value: ether('2') })
+        const tokenId = tx.logs[0].args[2].toString();
+        //Rent
+        await rentalAgentTokenInstance.rent(tokenId, 'some-fake-cid', { from: rent1, value: ether('2') })
+
+        expect(await rentalAgentTokenInstance.checkDelegatedOwner(tokenId, { from: rent1 })).to.be.equal(rent1);
+
+        const tx2 = await estateAgent.buy({ from: buy2, to: estateAgent.address, value: ether('2') })
+        const tokenId2 = tx2.logs[0].args[2].toString();
+        //Rent
+        console.log("Rented To 1: " + (await rentalAgentTokenInstance.spaceInfo.call(tokenId, {from: admin})).rentedTo)
+        console.log("Rented To 2: " + (await rentalAgentTokenInstance.spaceInfo.call(tokenId2, {from: admin})).rentedTo)
+
+        await rentalAgentTokenInstance.rent(tokenId2, 'some-fake-cid', { from: rent2, value: ether('2') })
+        expect(await rentalAgentTokenInstance.checkDelegatedOwner(tokenId2, { from: rent2 })).to.be.equal(rent2);
     });
 });
