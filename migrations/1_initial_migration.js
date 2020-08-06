@@ -23,19 +23,6 @@ module.exports = function (deployer, network, accounts) {
 
       //Use both the address in RentalAgent contract
       await deployer.deploy(RentalAgent, this.token.address, this.estateAgent.address);
-//       this.rentalAgent = await RentalAgent.deployed();
-
-//       let data = `NEXT_PUBLIC_CONTRACT_DECENTRAMALL_TOKEN=${this.token.address}
-// NEXT_PUBLIC_CONTRACT_ESTATE_AGENT=${this.estateAgent.address}
-// NEXT_PUBLIC_CONTRACT_RENTAL_AGENT=${this.rentalAgent.address}
-// NEXT_PUBLIC_JSON_RPC=http://127.0.0.1:8545` 
-      
-//       if(this.rentalAgent !== null){
-//         fs.appendFileSync('../webui/.env.local', data, function (err) {
-//           if (err) throw err;
-//           console.log('READY!');
-//         });
-//       }
     });
   }
 };
