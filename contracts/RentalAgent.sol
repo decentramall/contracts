@@ -23,39 +23,39 @@ contract RentalAgent is Administration{
     //Holds the address of the deployed token
     DecentramallToken public token;
 
-    //Holds the address of the EstateAgent
-    EstateAgent public estateAgent;
+    // //Holds the address of the EstateAgent
+    // EstateAgent public estateAgent;
 
-    event SetToken(address indexed _newContract);
-    event SetAgent(address indexed _newContract);
+    // event SetToken(address indexed _newContract);
+    // event SetAgent(address indexed _newContract);
     event Deposit(address indexed from, uint256 tokenId);
     event Rented(address indexed renter, uint256 tokenId, uint256 rentPrice);
     event ClaimRent(address indexed owner, uint256 amount, uint256 toClaim);
     event Withdraw(address indexed to, uint256 tokenId);
 
-    constructor(DecentramallToken _token, EstateAgent _estateAgent) public {
+    constructor(DecentramallToken _token/* , EstateAgent _estateAgent */) public {
         token = _token;
-        estateAgent = _estateAgent;
+        // estateAgent = _estateAgent;
     }
 
-    /**
-     * @dev Set token address
-     * @param _token the address of the newly deployed SPACE token
-     * In case if token address ever changes, we can set this contract to point there
-     */
-    function setToken(DecentramallToken _token) external onlyAdmin {
-        token = _token;
-        emit SetToken(address(_token));
-    }
+    // /**
+    //  * @dev Set token address
+    //  * @param _token the address of the newly deployed SPACE token
+    //  * In case if token address ever changes, we can set this contract to point there
+    //  */
+    // function setToken(DecentramallToken _token) external onlyAdmin {
+    //     token = _token;
+    //     emit SetToken(address(_token));
+    // }
 
-    /**
-     * @dev Set EstateAgent address
-     * @param _estateAgent the address of the EstateAgent
-     */
-    function setAgent(EstateAgent _estateAgent) external onlyAdmin {
-        estateAgent = _estateAgent;
-        emit SetAgent(address(_estateAgent));
-    }
+    // /**
+    //  * @dev Set EstateAgent address
+    //  * @param _estateAgent the address of the EstateAgent
+    //  */
+    // function setAgent(EstateAgent _estateAgent) external onlyAdmin {
+    //     estateAgent = _estateAgent;
+    //     emit SetAgent(address(_estateAgent));
+    // }
 
     /**
     * @dev Deposit the SPACE token to this contract
@@ -95,7 +95,7 @@ contract RentalAgent is Administration{
     **/
     function rent(uint256 tokenId, string memory _tokenURI) public payable{
         require(spaceInfo[tokenId].expiryBlock < block.number, "Token is already rented!");
-        uint256 priceFinney = estateAgent.price(token.totalSupply()+1) * _multiplier;
+        uint256 priceFinney = token.price(token.totalSupply()+1) * _multiplier;
         uint256 rentPrice = priceFinney / 120; //In wei
         require(msg.value >= (rentPrice * 1 wei), "Not enough funds!");
         spaceInfo[tokenId].rentedTo = msg.sender;
@@ -141,12 +141,12 @@ contract RentalAgent is Administration{
         }
     }
 
-    /**
-     * @dev Get balance
-     * @return balance in RentalAgent contract
-     */
-    function balance() public view returns(uint256){
-        address self = address(this);
-        return self.balance;
-    }
+    // /**
+    //  * @dev Get balance
+    //  * @return balance in RentalAgent contract
+    //  */
+    // function balance() public view returns(uint256){
+    //     address self = address(this);
+    //     return self.balance;
+    // }
 }
