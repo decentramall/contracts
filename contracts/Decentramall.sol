@@ -46,27 +46,27 @@ contract Decentramall is ERC721 {
         _basePrice = basePrice;
     }
 
-    /**
-     * @dev Withdraw funds from this contract
-     * @param to address to withdraw to
-     * @param amount the amount to withdraw
-     * @notice TODO: Make it multisig so not one admin can withdraw all
-     */
-    function withdraw(address payable to, uint256 amount) external onlyAdmin {
-        require(balance() > 0 && amount < balance(), "Impossible");
-        to.transfer(amount);
-        emit Withdraw(to, amount);
-    }
+    // /**
+    //  * @dev Withdraw funds from this contract
+    //  * @param to address to withdraw to
+    //  * @param amount the amount to withdraw
+    //  * @notice TODO: Make it multisig so not one admin can withdraw all
+    //  */
+    // function withdraw(address payable to, uint256 amount) external onlyAdmin {
+    //     require(balance() > 0 && amount < balance(), "Impossible");
+    //     to.transfer(amount);
+    //     emit Withdraw(to, amount);
+    // }
 
-    /**
-     * @dev Change the currentLimit variable (Max supply)
-     * @param limit the current token minting limit
-     * Only admin(s) can change this variable
-     */
-    function setLimit(uint256 limit) public onlyAdmin {
-        _currentLimit = limit;
-        emit SetLimit(limit);
-    }
+    // /**
+    //  * @dev Change the currentLimit variable (Max supply)
+    //  * @param limit the current token minting limit
+    //  * Only admin(s) can change this variable
+    //  */
+    // function setLimit(uint256 limit) public onlyAdmin {
+    //     _currentLimit = limit;
+    //     emit SetLimit(limit);
+    // }
 
     /**
      * @dev Get price of next token
