@@ -29,14 +29,15 @@ contract Decentramall is ERC721 {
     mapping(uint256 => SpaceDetails) public spaceInfo;
 
     event SetLimit(uint256 limit);
-    event Withdraw(address indexed to, uint256 amount);
+    // event Withdraw(address indexed to, uint256 amount);
     event BuyToken(address indexed buyer, uint256 price, uint256 tokenId);
+    event SellToken(address indexed seller, uint256 price, uint256 tokenId);
     event Received(address indexed sender, uint256 value);
 
     event Deposit(address indexed from, uint256 tokenId);
     event Rented(address indexed renter, uint256 tokenId, uint256 rentPrice);
     event ClaimRent(address indexed owner, uint256 amount, uint256 toClaim);
-    event Withdraw(address indexed to, uint256 tokenId);
+    // event Withdraw(address indexed to, uint256 tokenId);
 
     constructor(uint256 currentLimit, uint256 basePrice)
         public
@@ -53,7 +54,7 @@ contract Decentramall is ERC721 {
     //  * @notice TODO: Make it multisig so not one admin can withdraw all
     //  */
     // function withdraw(address payable to, uint256 amount) external onlyAdmin {
-    //     require(balance() > 0 && amount < balance(), "Impossible");
+    //     require(address(this).balance > 0 && amount < address(this).balance, "Impossible");
     //     to.transfer(amount);
     //     emit Withdraw(to, amount);
     // }
@@ -94,7 +95,8 @@ contract Decentramall is ERC721 {
             msg.value >= (quotedPrice * 1 wei),
             "Not enough funds to purchase token!"
         );
-        uint256 tokenId = _mint(msg.sender);
+        uint256 tokenId = uint256(keccak256(abi.encodePacked(msg.sender)));
+        _mint(msg.sender, tokenId);
 
         require(totalSupply() > supplyBefore, "Token did not mint!");
         emit BuyToken(msg.sender, quotedPrice, tokenId);
@@ -116,7 +118,7 @@ contract Decentramall is ERC721 {
         uint256 supplyBefore = totalSupply();
         uint256 quotedPrice = price(supplyBefore) * _multiplier;
 
-        require(quotedPrice <= balance(), "Price can't be higher than balance");
+        require(quotedPrice <= address(this).balance, "Price can't be higher than balance");
         _burn(tokenId);
 
         require(totalSupply() < supplyBefore, "Token did not burn");
@@ -136,7 +138,7 @@ contract Decentramall is ERC721 {
     * @notice need to write an approve method
     **/
     function deposit(uint256 tokenId) public {
-        require(verifyLegitimacy(msg.sender, tokenId) == true, "Fake token!");
+        require(_exists(tokenId) && ownerOf(tokenId) == msg.sender, "Fake token!");
         transferFrom(msg.sender, address(this), tokenId);
 
         //Register the rightful owner if first time user
@@ -157,7 +159,7 @@ contract Decentramall is ERC721 {
             spaceInfo[tokenId].rightfulOwner == msg.sender, "Token is rented / Not owner!"
         );
         claimRent(msg.sender, tokenId);
-        _safeTransfer(address(this), msg.sender, tokenId);
+        _safeTransfer(address(this), msg.sender, tokenId, "");
     }
 
     /**
@@ -185,7 +187,7 @@ contract Decentramall is ERC721 {
     function claimRent(address payable owner, uint256 tokenId) public {
         require(spaceInfo[tokenId].rightfulOwner == owner, "Not owner!");
         uint256 toClaim = spaceInfo[tokenId].rentalEarned;
-        require(balance() >= toClaim, "Not enough funds to pay!");
+        require(address(this).balance >= toClaim, "Not enough funds to pay!");
         spaceInfo[tokenId].rentalEarned -= toClaim;
         owner.transfer(toClaim * 1 wei);
         emit ClaimRent(owner, tokenId, toClaim);
