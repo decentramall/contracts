@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
  * @notice SPACE follows an ERC721 implementation
  * @dev Only one address can hold one SPACE token as the tokenID is a hash of the buyer's address
  */
-contract DecentramallToken is ERC721 {
+contract Decentramall is ERC721 {
     //Max limit of tokens to be minted
     uint256 public _currentLimit;
 
