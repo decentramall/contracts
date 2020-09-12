@@ -3,14 +3,14 @@
     "version": "0.0.1",
     "description": "This is the the contracts folder for decentramall!",
     "scripts": {
-        "pretest": "truffle compile",
+        "pretest": "yarn generate-ts",
         "test": "scripts/test.sh",
         "dev": "truffle test --network development",
-        "pretest:ci": "truffle compile",
+        "pretest:ci": "yarn generate-ts",
         "test:ci": "CI=true scripts/test.sh",
         "coverage": "SOLIDITY_COVERAGE=true scripts/test.sh",
         "coverage:ci": "CI=true SOLIDITY_COVERAGE=true scripts/test.sh",
-        "generate-types": "typechain --target truffle-v5 \"./build/contracts/*.json\"",
+        "generate-ts": "truffle compile && typechain --target truffle --outDir types/truffle-contracts './build/contracts/*.json'",
         "predevenv": "sleep 5 && truffle deploy --network development --reset &",
         "devenv": "ganache-cli --mnemonic \"hood return pride refuse resemble connect initial\" --gasLimit 0xfffffffffff --networkId 1337 --port 8545",
         "quicktest": "yarn generate-types && scripts/quicktest.sh"
@@ -22,8 +22,6 @@
         "@openzeppelin/contracts": "3.1.0"
     },
     "devDependencies": {
-        "@typechain/truffle-v5": "2.0.2",
-        "typechain": "2.0.0",
         "@openzeppelin/test-helpers": "0.5.6",
         "@truffle/hdwallet-provider": "1.0.39",
         "bignumber.js": "9.0.0",
@@ -31,6 +29,16 @@
         "eth-gas-reporter": "0.2.17",
         "ganache-cli": "6.9.1",
         "solidity-coverage": "0.7.9",
-        "truffle": "5.1.35"
+        "truffle": "5.1.35",
+        "@types/bignumber.js": "5.0.0",
+        "@types/chai": "4.2.10",
+        "@types/mocha": "7.0.2",
+        "@types/node": "12.12.31",
+        "truffle-typings": "1.0.8",
+        "ts-generator": "0.0.8",
+        "ts-node": "8.6.2",
+        "typechain": "1.0.5",
+        "typechain-target-truffle": "1.0.2",
+        "typescript": "3.8.3"
     }
 }
