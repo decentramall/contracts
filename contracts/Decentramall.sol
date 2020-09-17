@@ -116,11 +116,13 @@ contract Decentramall is ERC721 {
         uint256 rentPrice = priceFinney / 120; //In wei
         IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
         spaceInfo[tokenId].rentedTo = msg.sender;
-        spaceInfo[tokenId].rentalEarned += rentPrice;
+        spaceInfo[tokenId].rentalEarned = rentPrice;
         spaceInfo[tokenId].expiryBlock = block.number + 187714;
         _setTokenURI(tokenId, _tokenURI);
         emit Rented(msg.sender, tokenId, rentPrice);
     }
+
+    // TODO: add method to extend rent
 
     // TODO: add method to cancel rent, forcing to wait two days
 
