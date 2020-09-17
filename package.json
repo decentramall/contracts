@@ -1,7 +1,7 @@
 {
     "name": "decentramall-smart-contracts",
     "version": "0.0.1",
-    "description": "This is the the contracts folder for decentramall!",
+    "description": "smart-contracts for decentramall",
     "scripts": {
         "pretest": "yarn generate-ts",
         "test": "scripts/test.sh",
@@ -19,26 +19,26 @@
     "author": "",
     "license": "GPL-3.0-only",
     "dependencies": {
-        "@openzeppelin/contracts": "3.1.0"
+        "@openzeppelin/contracts": "3.2.0"
     },
     "devDependencies": {
         "@openzeppelin/test-helpers": "0.5.6",
-        "@truffle/hdwallet-provider": "1.0.39",
+        "@truffle/hdwallet-provider": "1.0.44",
         "bignumber.js": "9.0.0",
         "chai": "4.2.0",
         "eth-gas-reporter": "0.2.17",
-        "ganache-cli": "6.9.1",
-        "solidity-coverage": "0.7.9",
-        "truffle": "5.1.35",
+        "ganache-cli": "6.10.2",
+        "solidity-coverage": "0.7.10",
+        "truffle": "5.1.44",
         "@types/bignumber.js": "5.0.0",
-        "@types/chai": "4.2.10",
-        "@types/mocha": "7.0.2",
-        "@types/node": "12.12.31",
+        "@types/chai": "4.2.12",
+        "@types/mocha": "8.0.3",
+        "@types/node": "14.10.3",
         "truffle-typings": "1.0.8",
         "ts-generator": "0.0.8",
-        "ts-node": "8.6.2",
+        "ts-node": "9.0.0",
         "typechain": "1.0.5",
         "typechain-target-truffle": "1.0.2",
-        "typescript": "3.8.3"
+        "typescript": "4.0.2"
     }
 }
