@@ -112,8 +112,8 @@ contract Decentramall is ERC721 {
             spaceInfo[tokenId].expiryBlock < block.number,
             "Token is already rented!"
         );
-        uint256 priceFinney = price(totalSupply() + 1) * multiplier;
-        uint256 rentPrice = priceFinney / 120; //In wei
+        uint256 actualPrice = price(totalSupply() + 1) * multiplier;
+        uint256 rentPrice = actualPrice / 120; //In 18 decimals
         IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
         spaceInfo[tokenId].rentedTo = msg.sender;
         spaceInfo[tokenId].rentalEarned = rentPrice;

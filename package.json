@@ -13,7 +13,7 @@
         "generate-ts": "truffle compile && typechain --target truffle --outDir types/truffle-contracts ./build/contracts/*.json",
         "predevenv": "sleep 5 && truffle deploy --network development --reset &",
         "devenv": "ganache-cli --mnemonic \"hood return pride refuse resemble connect initial\" --gasLimit 0xfffffffffff --networkId 1337 --port 8545",
-        "quicktest": "yarn generate-ts && scripts/quicktest.sh"
+        "quicktest": "yarn generate-ts && truffle test"
     },
     "keywords": [],
     "author": "",
