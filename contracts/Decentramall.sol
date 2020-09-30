@@ -11,8 +11,15 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract Decentramall is ERC721 {
     //Max limit of tokens to be minted
     uint256 public currentLimit;
-    //Base price to start
-    uint256 public basePrice;
+
+    /** Bonding curve variables */
+    //Max price
+    uint256 public maxPrice = 5000;
+    //Inflection point
+    uint256 public midpoint = 600;
+    //Steepness
+    uint256 public steepness = 50000;
+
     //Multiplier to get price in 18 decimals
     uint256 public multiplier = 1000000000000000000;
     // DAI contract address
@@ -59,13 +66,19 @@ contract Decentramall is ERC721 {
     // }
 
     /**
-     * @dev Get price of next token
+     * @dev Get price of next token 
      * @param x the x value in the bonding curve graph
-     * Assuming current bonding curve function of y = x^2 + basePrice
+     * Assuming current bonding curve function of 
+     * y = maxPrice/2(( x - midpoint )/sqrt(steepness + (x - midpoint)^2) + 1)
+     * In other words, a Sigmoid function
+     * @dev NOTE: Will possibly hardcode sqrt values in the future to save gas fees
+     * @dev ANOTHER NOTE: Price is based on the point on the curve, not area!
      * @return price at the specific position in bonding curve
      */
     function price(uint256 x) public view returns (uint256) {
-        return ((x**2) + basePrice);
+        let numerator =  x - midpoint;
+        let denominator = (steepness + (x - midpoint)**2 )**0.5
+        return (maxPrice/2 * (numerator/denominator + 1));
     }
 
     /**
