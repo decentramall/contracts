@@ -13,8 +13,8 @@ contract Decentramall is ERC721 {
     uint256 public currentLimit;
     //Base price to start
     uint256 public basePrice;
-    //TEMPORARY Multiplier to get price in 10 Finney
-    uint256 public multiplier = 10000000000000000;
+    //Multiplier to get price in 18 decimals
+    uint256 public multiplier = 1000000000000000000;
     // DAI contract address
     address public dai;
 
