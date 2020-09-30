@@ -71,6 +71,8 @@ contract('Decentramall', (accounts) => {
             const rentPriceSPACE = Math.floor(parseFloat(toBigNumber(await decentramallInstance.price(2))
                 .multipliedBy(await decentramallInstance.multiplier()).dividedBy(120).toString()));
             const previousBalance = toBigNumber(await daiInstance.balanceOf(renterA));
+            console.log("Rent price: " + rentPriceSPACE)
+            console.log("Prev bal: " + previousBalance)
             await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
             await decentramallInstance.rent(tokenId, 'some-fake-cid', { from: renterA })
             const currentBalance = toBigNumber(await daiInstance.balanceOf(renterA));

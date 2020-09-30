@@ -13,8 +13,8 @@ contract Decentramall is ERC721 {
     uint256 public currentLimit;
     //Base price to start
     uint256 public basePrice;
-    //TEMPORARY Multiplier to get price in 10 Finney
-    uint256 public multiplier = 10000000000000000;
+    //Multiplier to get price in 18 decimals
+    uint256 public multiplier = 1000000000000000000;
     // DAI contract address
     address public dai;
 
@@ -112,8 +112,8 @@ contract Decentramall is ERC721 {
             spaceInfo[tokenId].expiryBlock < block.number,
             "Token is already rented!"
         );
-        uint256 priceFinney = price(totalSupply() + 1) * multiplier;
-        uint256 rentPrice = priceFinney / 120; //In wei
+        uint256 actualPrice = price(totalSupply() + 1) * multiplier;
+        uint256 rentPrice = actualPrice / 120; //In 18 decimals
         IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
         spaceInfo[tokenId].rentedTo = msg.sender;
         spaceInfo[tokenId].rentalEarned = rentPrice;
