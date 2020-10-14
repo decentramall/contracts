@@ -21,16 +21,18 @@ contract Decentramall is ERC721 {
     //Steepness
     int256 public steepness;
 
-    // Registry contract address
-    address public registry;
+    // DAI contract address
+    address public dai;
 
-    modifier onlyRegistry(address caller) {
-        require(caller == registry);
-        _;
+    struct SpaceDetails {
+        address owner;
+        address renter;
+        uint256 rentalEarned;
+        uint256 expiryBlock;
     }
 
-    event Mint(address buyer, uint256 tokenId);
-    event Burn(address seller, uint256 tokenId);
+    event BuySpace(address buyer, uint256 tokenId, uint256 price);
+    event SellSpace(address seller, uint256 tokenId, uint256 price);
 
     constructor(
         int256 _currentLimit,
@@ -47,38 +49,47 @@ contract Decentramall is ERC721 {
 
     /**
      * @dev Get price of next token
+     * @param x the position on the curve to check
      * Assuming current bonding curve function of 
      * y = maxPrice/2(( x - midpoint )/sqrt(steepness + (x - midpoint)^2) + 1)
      * In other words, a Sigmoid function
      * Note that we divide back by 10^30 because 10^24 * 10^24 = 10^48 and most ERC20 is in 10^18
      * @return price at the specific position in bonding curve
      */
-    function price() public view returns(int256){
-        int256 numerator = int256(totalSupply()) - midpoint;
+    function price(uint256 x) public view returns(uint256){
+        int256 numerator = int256(x) - midpoint;
         int256 innerSqrt = (steepness + (numerator)**2);
         int256 fixedInner = innerSqrt.toFixed();
         int256 fixedDenominator = fixedInner.sqrt();
         int256 fixedNumerator = numerator.toFixed();
         int256 midVal = fixedNumerator.divide(fixedDenominator) + 1000000000000000000000000;
         int256 fixedFinal = maxPrice.toFixed() * midVal;
-        return (fixedFinal / 1000000000000000000000000000000);
+        return uint256(fixedFinal / 1000000000000000000000000000000);
     }
 
     /**
-     * @dev Mint SPACE
+     * @dev Buy SPACE
      */
-    function mint(address buyer) public onlyRegistry(msg.sender){
-        require(totalSupply() < currentLimit);
-        uint256 tokenId = uint256(keccak256(buyer))
-        _mint(buyer, tokenId);
-        emit Mint(buyer, tokenId);
+    function buy() public payable{
+        uint256 currentSupply = totalSupply();
+        uint256 estimatedPrice = price(currentSupply + 1);
+
+        require(currentSupply < currentLimit, "Max Supply Reached!");
+        require(msg.value >= estimatedPrice, "Insufficient Funds to Purchase!");
+
+        uint256 tokenId = uint256(keccak256(msg.sender));
+        _mint(msg.sender, tokenId);
+        emit BuySpace(msg.sender, tokenId, estimatedPrice);
     }
 
     /**
-     * @dev Burn SPACE
+     * @dev Sell SPACE
      */
-    function burn(address seller, uint256 tokenId) public onlyRegistry(msg.sender){
+    function sell(uint256 tokenId) private{
         _burn(tokenId);
-        emit Burn(seller, tokenId);
+        uint256 quotedPrice = price(totalSupply()) * multiplier;
+        IERC20(dai).transfer(msg.sender, quotedPrice);
+        _burn(tokenId);
+        emit SellToken(msg.sender, quotedPrice, tokenId);
     }
 }
