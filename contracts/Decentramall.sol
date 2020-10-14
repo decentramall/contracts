@@ -59,10 +59,11 @@ contract Decentramall is ERC721 {
         int256 innerSqrt = (steepness + (numerator)**2);
         int256 fixedInner = innerSqrt.toFixed();
         int256 fixedDenominator = fixedInner.sqrt();
-        int256 fixedNumerator = numerator.toFixed();
-        int256 midVal = fixedNumerator.divide(fixedDenominator) + 1000000000000000000000000;
-        int256 fixedFinal = maxPrice.toFixed() * midVal;
-        return (fixedFinal / 10000000000000000000000000000000);
+        return fixedDenominator;
+        // int256 fixedNumerator = numerator.toFixed();
+        // int256 midVal = fixedNumerator.divide(fixedDenominator) + 1000000000000000000000000;
+        // int256 fixedFinal = maxPrice.toFixed() * midVal;
+        // return (fixedFinal / 10000000000000000000000000000000);
     }
 
     // function mint(address buyer) public onlyRegistry(msg.sender){
