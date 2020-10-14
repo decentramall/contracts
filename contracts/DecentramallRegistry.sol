@@ -20,6 +20,10 @@ contract DecentramallRegistry {
         uint256 expiryBlock;
     }
 
+    function price() public {
+
+    }
+
     function buy() public {
 
     }
