@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.6.8;
+pragma solidity ^0.7.0;
 
-import Decentramall from './Decentramall.sol';
+import './Decentramall.sol';
 
 /** @title Decentramall SPACE token
  * @notice This contract will house the renting, registry and buying of SPACE
@@ -21,6 +21,6 @@ contract DecentramallRegistry {
     }
 
     function buy() public {
-        
+
     }
 }

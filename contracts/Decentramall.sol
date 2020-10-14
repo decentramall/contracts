@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.6.8;
+pragma solidity ^0.7.0;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -17,4 +17,17 @@ contract Decentramall is ERC721 {
     uint256 public multiplier = 1000000000000000000;
     // DAI contract address
     address public dai;
+    // Registry contract address
+    address public registry;
+
+    modifier onlyRegistry(address caller) {
+        require(msg.sender === registry);
+        _;
+    }
+
+
+
+    function mint() onlyRegistry(msg.sender){
+
+    }
 }
