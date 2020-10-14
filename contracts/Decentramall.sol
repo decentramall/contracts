@@ -47,23 +47,21 @@ contract Decentramall is ERC721 {
 
     /**
      * @dev Get price of next token
-     * param x the x value in the bonding curve graph
      * Assuming current bonding curve function of 
      * y = maxPrice/2(( x - midpoint )/sqrt(steepness + (x - midpoint)^2) + 1)
      * In other words, a Sigmoid function
+     * Note that we divide back by 10^30 because 10^24 * 10^24 = 10^48 and most ERC20 is in 10^18
      * @return price at the specific position in bonding curve
      */
     function price(int256 x) public view returns(int256){
-        // int256 numerator = int256(totalSupply()) - midpoint;
-        int256 numerator = x - midpoint;
+        int256 numerator = int256(totalSupply()) - midpoint;
         int256 innerSqrt = (steepness + (numerator)**2);
         int256 fixedInner = innerSqrt.toFixed();
         int256 fixedDenominator = fixedInner.sqrt();
-        return fixedDenominator;
-        // int256 fixedNumerator = numerator.toFixed();
-        // int256 midVal = fixedNumerator.divide(fixedDenominator) + 1000000000000000000000000;
-        // int256 fixedFinal = maxPrice.toFixed() * midVal;
-        // return (fixedFinal / 10000000000000000000000000000000);
+        int256 fixedNumerator = numerator.toFixed();
+        int256 midVal = fixedNumerator.divide(fixedDenominator) + 1000000000000000000000000;
+        int256 fixedFinal = maxPrice.toFixed() * midVal;
+        return (fixedFinal / 1000000000000000000000000000000);
     }
 
     // function mint(address buyer) public onlyRegistry(msg.sender){

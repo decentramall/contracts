@@ -169,13 +169,33 @@ library FixedMath {
         return multiply(x, reciprocal(y));
     }
 
+    /**
+     * @notice Babylonian method
+     * @dev Some complicated stuff
+     */
     function sqrt(int256 x) public pure returns(int256){
-        int256 z = divide((x + fixed1()), fixed2());
-        int256 y = x;
-        while (z < y) {
-            y = z;
-            z = divide(divide(x, add(z, z)), 2);
+        
+        int256 oldApprox = fixed1();
+        int256 newInnerX = oldApprox + divide(x, oldApprox);
+        int256 newApprox = divide(newInnerX, fixed2());
+
+        while(oldApprox != newApprox){
+            oldApprox = newApprox;
+            newInnerX = oldApprox + divide(x, oldApprox);
+            newApprox = divide(newInnerX, fixed2());
         }
-        return y;
+
+        return newApprox;
+        
+        // int256 newInnerX = fixed1() + divide(x, fixed1());
+        // int256 newX = divide(newInnerX, fixed2());
+
+        // int256 z = divide((x + fixed1()), fixed2());
+        // int256 y = x;
+        // while (z < y) {
+        //     y = z;
+        //     z = divide(divide(x, add(z, z)), 2);
+        // }
+        // return y;
     }
 }
