@@ -26,8 +26,16 @@ contract('Decentramall', (accounts) => {
             decentramallInstance = await Decentramall.new(1200, 2500, 100000, daiInstance.address);
         });
         it('Should return roughly 289.00 DAI for 1st SPACE', async () => {
-            const priceSPACE = toBigNumber(await decentramallInstance.price()).toString();
+            const priceSPACE = toBigNumber(await decentramallInstance.price(1)).toString();
             console.log("Price SPACE:", priceSPACE)
-        })
+        });
+        it('Should return roughly 2389.00 DAI for 586th SPACE', async () => {
+            const priceSPACE = toBigNumber(await decentramallInstance.price(586)).toString();
+            console.log("Price SPACE:", priceSPACE)
+        });
+        it('Should return roughly 4711.00 DAI for 1200th SPACE', async () => {
+            const priceSPACE = toBigNumber(await decentramallInstance.price(1200)).toString();
+            console.log("Price SPACE:", priceSPACE)
+        });
     });
 });
