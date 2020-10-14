@@ -16,8 +16,10 @@ contract Decentramall is ERC721 {
     int256 public currentLimit;
     //Midpoint for price function
     int256 public midpoint;
-    //Base price to start
+    //Half of max price 
     int256 public maxPrice;
+    //Steepness
+    int256 public steepness;
     //Multiplier to get price in 18 decimals
     int256 public multiplier = 1000000000000000000;
     // DAI contract address
@@ -33,12 +35,13 @@ contract Decentramall is ERC721 {
     constructor(
         int256 _currentLimit,
         int256 _maxPrice,
-        int256 _midpoint,
+        int256 _steepness,
         address _dai
     ) public ERC721("SPACE", "SPACE") {
         currentLimit = _currentLimit;
         maxPrice = _maxPrice;
-        midpoint = _midpoint;
+        midpoint = currentLimit/2;
+        steepness = _steepness;
         dai = _dai;
     }
 
@@ -50,9 +53,10 @@ contract Decentramall is ERC721 {
      * In other words, a Sigmoid function
      * @return price at the specific position in bonding curve
      */
-    function price() public pure{
+    function price() public returns(int256 price){
         int256 numerator = int256(totalSupply()) - midpoint;
-        int256 denominator = 
+        int256 innerSqrt = (steepness + (numerator)**2);
+        int256 denominator = Fix;
     }
 
     function mint(address buyer) onlyRegistry(msg.sender){

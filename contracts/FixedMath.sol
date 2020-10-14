@@ -13,6 +13,15 @@ library FixedMath {
     }
 
     /**
+     * @notice This is 2 in the fixed point units used in this library.
+     * @dev fixed2() equals 2*10^24
+     * Hardcoded to 24 digits.
+     */
+    function fixed2() public pure returns(int256) {
+        return 2000000000000000000000000;
+    }
+
+    /**
     @dev Convert an int256 to fixed number with 24 decimal points
      */
     function toFixed(int256 num) public pure returns(int256){
@@ -161,6 +170,11 @@ library FixedMath {
     }
 
     function sqrt(int256 x) public pure returns(int256){
-        
+        int256 z = divide((x + fixed1()), fixed2());
+        int256 y = x;
+        while (z < y) {
+            y = z;
+            z = divide(divide(x, add(z, z)), 2);
+        }
     }
 }
