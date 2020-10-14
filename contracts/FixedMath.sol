@@ -186,16 +186,5 @@ library FixedMath {
         }
 
         return newApprox;
-        
-        // int256 newInnerX = fixed1() + divide(x, fixed1());
-        // int256 newX = divide(newInnerX, fixed2());
-
-        // int256 z = divide((x + fixed1()), fixed2());
-        // int256 y = x;
-        // while (z < y) {
-        //     y = z;
-        //     z = divide(divide(x, add(z, z)), 2);
-        // }
-        // return y;
     }
 }

@@ -20,10 +20,7 @@ contract Decentramall is ERC721 {
     int256 public maxPrice;
     //Steepness
     int256 public steepness;
-    //Multiplier to get price in 18 decimals
-    int256 public multiplier = 1000000000000000000;
-    // DAI contract address
-    address public dai;
+
     // Registry contract address
     address public registry;
 
@@ -32,17 +29,20 @@ contract Decentramall is ERC721 {
         _;
     }
 
+    event Mint(address buyer, uint256 tokenId);
+    event Burn(address seller, uint256 tokenId);
+
     constructor(
         int256 _currentLimit,
         int256 _maxPrice,
         int256 _steepness,
-        address _dai
+        address _registry
     ) public ERC721("SPACE", "SPACE") {
         currentLimit = _currentLimit;
         maxPrice = _maxPrice;
         midpoint = currentLimit/2;
         steepness = _steepness;
-        dai = _dai;
+        registry = _registry;
     }
 
     /**
@@ -53,7 +53,7 @@ contract Decentramall is ERC721 {
      * Note that we divide back by 10^30 because 10^24 * 10^24 = 10^48 and most ERC20 is in 10^18
      * @return price at the specific position in bonding curve
      */
-    function price(int256 x) public view returns(int256){
+    function price() public view returns(int256){
         int256 numerator = int256(totalSupply()) - midpoint;
         int256 innerSqrt = (steepness + (numerator)**2);
         int256 fixedInner = innerSqrt.toFixed();
@@ -64,7 +64,21 @@ contract Decentramall is ERC721 {
         return (fixedFinal / 1000000000000000000000000000000);
     }
 
-    // function mint(address buyer) public onlyRegistry(msg.sender){
-    //     require(buyer == msg.sender);
-    // }
+    /**
+     * @dev Mint SPACE
+     */
+    function mint(address buyer) public onlyRegistry(msg.sender){
+        require(totalSupply() < currentLimit);
+        uint256 tokenId = uint256(keccak256(buyer))
+        _mint(buyer, tokenId);
+        emit Mint(buyer, tokenId);
+    }
+
+    /**
+     * @dev Burn SPACE
+     */
+    function burn(address seller, uint256 tokenId) public onlyRegistry(msg.sender){
+        _burn(tokenId);
+        emit Burn(seller, tokenId);
+    }
 }
