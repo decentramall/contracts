@@ -1,16 +1,16 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.7.0;
+pragma solidity ^0.6.8;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { FixidityLib } from "./FixidityLib.sol";
+import { FixedMath } from "./FixedMath.sol";
 
 /** @title Decentramall SPACE token
  * @notice SPACE follows an ERC721 implementation
  * @dev Only one address can hold one SPACE token as the tokenID is a hash of the buyer's address
  */
 contract Decentramall is ERC721 {
-    using FixidityLib for int256;
+    using FixedMath for int256;
 
     //Max limit of tokens to be minted
     int256 public currentLimit;
@@ -47,19 +47,24 @@ contract Decentramall is ERC721 {
 
     /**
      * @dev Get price of next token
-     * @param x the x value in the bonding curve graph
+     * param x the x value in the bonding curve graph
      * Assuming current bonding curve function of 
      * y = maxPrice/2(( x - midpoint )/sqrt(steepness + (x - midpoint)^2) + 1)
      * In other words, a Sigmoid function
      * @return price at the specific position in bonding curve
      */
-    function price() public returns(int256 price){
+    function price() public returns(int256){
         int256 numerator = int256(totalSupply()) - midpoint;
         int256 innerSqrt = (steepness + (numerator)**2);
-        int256 denominator = Fix;
+        int256 fixedInner = innerSqrt.toFixed();
+        int256 fixedDenominator = fixedInner.sqrt();
+        int256 fixedNumerator = numerator.toFixed();
+        int256 midVal = fixedNumerator.divide(fixedDenominator) + 1000000000000000000000000;
+        int256 fixedFinal = maxPrice.toFixed() * midVal;
+        return fixedFinal / 1000000;
     }
 
-    function mint(address buyer) onlyRegistry(msg.sender){
-
+    function mint(address buyer) public onlyRegistry(msg.sender){
+        maxPrice = 200;
     }
 }
