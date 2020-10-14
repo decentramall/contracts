@@ -53,18 +53,19 @@ contract Decentramall is ERC721 {
      * In other words, a Sigmoid function
      * @return price at the specific position in bonding curve
      */
-    function price() public returns(int256){
-        int256 numerator = int256(totalSupply()) - midpoint;
+    function price(int256 x) public view returns(int256){
+        // int256 numerator = int256(totalSupply()) - midpoint;
+        int256 numerator = x - midpoint;
         int256 innerSqrt = (steepness + (numerator)**2);
         int256 fixedInner = innerSqrt.toFixed();
         int256 fixedDenominator = fixedInner.sqrt();
         int256 fixedNumerator = numerator.toFixed();
         int256 midVal = fixedNumerator.divide(fixedDenominator) + 1000000000000000000000000;
         int256 fixedFinal = maxPrice.toFixed() * midVal;
-        return fixedFinal / 1000000;
+        return (fixedFinal / 10000000000000000000000000000000);
     }
 
-    function mint(address buyer) public onlyRegistry(msg.sender){
-        maxPrice = 200;
-    }
+    // function mint(address buyer) public onlyRegistry(msg.sender){
+    //     require(buyer == msg.sender);
+    // }
 }

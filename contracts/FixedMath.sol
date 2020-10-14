@@ -176,5 +176,6 @@ library FixedMath {
             y = z;
             z = divide(divide(x, add(z, z)), 2);
         }
+        return y;
     }
 }
