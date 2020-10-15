@@ -28,17 +28,10 @@ contract Decentramall is ERC721 {
         address renter; // The address who rent
         uint256 rentalEarned; // The amount earnt
         uint256 expiryBlock; // The block the rent expires
-        bool isRentable; // Can be rented
-        bool isValid; // True if purchased & not sold
     }
 
     //Mapping of tokenId to SpaceDetails
     mapping(address => SpaceDetails) public spaceInfo;
-
-    modifier isOwner(address caller){
-        require(spaceInfo[caller].isValid == true);
-        _;
-    }
 
     event BuySpace(address buyer, uint256 tokenId, uint256 price);
     event SellSpace(address seller, uint256 tokenId, uint256 price);
@@ -91,6 +84,7 @@ contract Decentramall is ERC721 {
 
         IERC20(dai).transferFrom(msg.sender, address(this), estimatedPrice);
         uint256 tokenId = uint256(keccak256(abi.encodePacked(msg.sender)));
+
         _mint(msg.sender, tokenId);
         emit BuySpace(msg.sender, tokenId, estimatedPrice);
     }
@@ -101,7 +95,7 @@ contract Decentramall is ERC721 {
     function sell(uint256 tokenId) public{
         require(ownerOf(tokenId) == msg.sender, "Fake token!");
         uint256 quotedPrice = price(totalSupply());
-
+        
         _burn(tokenId);
         IERC20(dai).transfer(msg.sender, quotedPrice);
         emit SellSpace(msg.sender, tokenId, quotedPrice);
@@ -109,10 +103,12 @@ contract Decentramall is ERC721 {
 
     /**
      * @dev Deposit SPACE to be rented out
+     * @notice Must ensure that it is your space before you can deposit it. This is to prevent double SPACE hogging
      */
     function deposit(uint256 tokenId) public {
+        require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "Not owner!");
         transferFrom(msg.sender, address(this), tokenId);
-        spaceInfo[msg.sender].isRentable = true;
+        emit DepositSpace(msg.sender, tokenId);
     }
 
     /**
@@ -139,13 +135,19 @@ contract Decentramall is ERC721 {
      * @dev Withdraw space
      * @param tokenId id of the SPACE token
      * @notice Withdrawing also claims rent
+     * @notice We need to check for a few things.
+     * First, does this token exist in this contract
+     * Then, is the hash of the owner's address equal to that tokenID 
      **/
     function withdraw(uint256 tokenId) public{
-        require(ownerOf(tokenId) == msg.sender, "Fake token!");
-        uint256 quotedPrice = price(totalSupply());
+        require(ownerOf(tokenId) == address(this), "Doesn't exist!");
+        require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "Not owner!");
+        
+        //Claim rent
+        claim(tokenId);
 
-        _burn(tokenId);
-        IERC20(dai).transfer(msg.sender, quotedPrice);
-        emit SellSpace(msg.sender, tokenId, quotedPrice);
+        //Withdraw
+        transferFrom(address(this), msg.sender, tokenId);
+        emit WithdrawSpace(msg.sender, tokenId);
     }
 }
