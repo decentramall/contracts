@@ -16,6 +16,7 @@ function toBigNumber(bigNumber: BigNumber) {
 contract('Decentramall', (accounts) => {
     const ownerA = accounts[0];
     const renterA = accounts[1];
+    const ownerB = accounts[2];
     let decentramallInstance: DecentramallInstance;
     let daiInstance: ERC20Instance;
     let tokenId: string;
@@ -53,6 +54,9 @@ contract('Decentramall', (accounts) => {
             await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: ownerA });
             const tx = await decentramallInstance.buy({ from: ownerA });
             const isOwner = await decentramallInstance.ownerOf(tx.logs[1].args[1].toString());
+            
+            const test = await decentramallInstance.balanceOf(ownerA, {from: ownerA});
+            console.log(test);
             expect(isOwner).to.be.eq(ownerA);
             const currentBalance = toBigNumber(await daiInstance.balanceOf(ownerA));
             // console.log("Current Balance: ", currentBalance.toString());
@@ -159,6 +163,15 @@ contract('Decentramall', (accounts) => {
             await decentramallInstance.rent(tokenId, 'some-fake-cid', { from: renterA });
             await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
             await expectRevert(decentramallInstance.rent(tokenId, 'some-fake-cid', { from: renterA }), "RENT: Token is already rented!");
+        });
+        it('should fail rent (nonexistent token)', async () => {
+            const priceSPACE = toBigNumber(await decentramallInstance.price(2)).toString();
+            await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: ownerB });
+            const tx = await decentramallInstance.buy({ from: ownerB });
+            tokenId = tx.logs[1].args[1].toString();
+            const rentPriceSPACE = Math.floor(parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString())).toString();
+            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
+            await expectRevert(decentramallInstance.rent(tokenId, 'some-fake-cid', { from: renterA }), "RENT: Doesn't exist!");
         });
         it('should claim rent successfully', async () => {
             const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane

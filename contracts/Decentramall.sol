@@ -32,6 +32,8 @@ contract Decentramall is ERC721 {
 
     //Mapping of tokenId to SpaceDetails
     mapping(uint256 => SpaceDetails) public spaceInfo;
+    //Mapping of address to cooldown block (prevent double renting & repeated rent,cancel,rent)
+    mapping(address => uint256) public cooldownByAddress;
 
     event BuySpace(address buyer, uint256 tokenId, uint256 price);
     event SellSpace(address seller, uint256 tokenId, uint256 price);
@@ -115,15 +117,17 @@ contract Decentramall is ERC721 {
      * @dev Rent SPACE
      * @param tokenId id of the SPACE token
      * @param _tokenURI unique id for the store
-     * @notice The SPACE must be rentable, which means it must exist in this contract & 
+     * @notice The SPACE must be rentable, which means it must exist in this contract, does not hold any space token,
      * expiryBlock < block.number
      * @notice Rent per year cost 1/10 of the price to buy new & lasts for 1 month (187714 blocks)
      */
     function rent(uint256 tokenId, string memory _tokenURI) public {
+        require(ownerOf(tokenId) == address(this), "RENT: Doesn't exist!");
         require(
             spaceInfo[tokenId].expiryBlock < block.number,
             "RENT: Token is already rented!"
         );
+        require(balanceOf(msg.sender) == 0, "RENT: Can't rent if address owns SPACE token");
         uint256 actualPrice = price(totalSupply() + 1);
         uint256 rentPrice = actualPrice / 120; //In 18 decimals
         IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
