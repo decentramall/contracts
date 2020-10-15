@@ -190,6 +190,14 @@ contract('Decentramall', (accounts) => {
             await decentramallInstance.rent(tokenId, 'some-fake-cid', { from: renterA });
             await expectRevert(decentramallInstance.claim(tokenId, {from: renterA}), "CLAIM: Not owner!");
         });
+        it('should fail rent as space owner', async () => {
+            const priceSPACE = toBigNumber(await decentramallInstance.price(2)).toString();
+            await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: renterA });
+            await decentramallInstance.buy({ from: renterA });
+            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
+            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
+            await expectRevert(decentramallInstance.rent(tokenId, 'some-fake-cid',{from: renterA}), "RENT: Can't rent if address owns SPACE token"); 
+        });
         // it('should claim rent via withdraw successfully', async () => {
         //     const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
         //     await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });

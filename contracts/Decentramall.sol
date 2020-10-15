@@ -41,6 +41,8 @@ contract Decentramall is ERC721 {
     event WithdrawSpace(address withdrawer, uint256 tokenId);
     event RentSpace(address renter, uint256 tokenId, uint256 expiryBlock, uint256 rentPaid);
     event ClaimRent(address owner, uint256 tokenId, uint256 rentClaimed);
+    event ExtendRent(address renter, uint256 tokenId, uint256 newExpiryBlock, uint256 newRentPaid);
+    event CancelRent(address renter, uint256 tokenId);
 
     constructor(
         int256 _currentLimit,
@@ -117,17 +119,14 @@ contract Decentramall is ERC721 {
      * @dev Rent SPACE
      * @param tokenId id of the SPACE token
      * @param _tokenURI unique id for the store
-     * @notice The SPACE must be rentable, which means it must exist in this contract, does not hold any space token,
+     * @notice The SPACE must be rentable, which means it must exist in this contract, msg.sender does not own a space token,
      * expiryBlock < block.number
      * @notice Rent per year cost 1/10 of the price to buy new & lasts for 1 month (187714 blocks)
      */
     function rent(uint256 tokenId, string memory _tokenURI) public {
         require(ownerOf(tokenId) == address(this), "RENT: Doesn't exist!");
-        require(
-            spaceInfo[tokenId].expiryBlock < block.number,
-            "RENT: Token is already rented!"
-        );
-        require(balanceOf(msg.sender) == 0, "RENT: Can't rent if address owns SPACE token");
+        require(spaceInfo[tokenId].expiryBlock < block.number, "RENT: Token is already rented!");
+        require(ownerOf(uint256(keccak256(abi.encodePacked(msg.sender)))) != msg.sender, "RENT: Can't rent if address owns SPACE token"); 
         uint256 actualPrice = price(totalSupply() + 1);
         uint256 rentPrice = actualPrice / 120; //In 18 decimals
         IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
