@@ -145,9 +145,9 @@ contract Decentramall is ERC721 {
      **/
     function claim(uint256 tokenId) public {
         require(ownerOf(tokenId) == msg.sender, "Not owner!");
-        uint256 toClaim = spaceInfo[msg.sender].rentalEarned;
+        uint256 toClaim = spaceInfo[tokenId].rentalEarned;
         IERC20(dai).transfer(msg.sender, toClaim);
-        spaceInfo[msg.sender].rentalEarned -= toClaim;
+        spaceInfo[tokenId].rentalEarned -= toClaim;
         emit ClaimRent(msg.sender, tokenId, toClaim);
     }
 
@@ -157,7 +157,7 @@ contract Decentramall is ERC721 {
      * @notice Withdrawing also claims rent
      * @notice We need to check for a few things.
      * First, does this token exist in this contract
-     * Then, is the hash of the owner's address equal to that tokenID 
+     * Then, is the hash of the owner's address equal to that tokenID (proof of identity)
      **/
     function withdraw(uint256 tokenId) public{
         require(ownerOf(tokenId) == address(this), "Doesn't exist!");
