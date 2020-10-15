@@ -25,7 +25,7 @@ contract Decentramall is ERC721 {
     address public dai;
 
     struct SpaceDetails {
-        address renter; // The address who rent
+        address rentedTo; // The address who rent
         uint256 rentalEarned; // The amount earnt
         uint256 expiryBlock; // The block the rent expires
     }
@@ -149,7 +149,7 @@ contract Decentramall is ERC721 {
 
         uint256 toClaim = spaceInfo[tokenId].rentalEarned;
         spaceInfo[tokenId].rentalEarned -= toClaim;
-        
+
         IERC20(dai).transfer(msg.sender, toClaim);
         emit ClaimRent(msg.sender, tokenId, toClaim);
     }
@@ -170,7 +170,7 @@ contract Decentramall is ERC721 {
         claim(tokenId);
 
         //Withdraw
-        transferFrom(address(this), msg.sender, tokenId);
+        _transfer(address(this), msg.sender, tokenId);
         emit WithdrawSpace(msg.sender, tokenId);
     }
 }
