@@ -93,6 +93,7 @@ contract Decentramall is ERC721 {
      * @dev Sell SPACE
      */
     function sell(uint256 tokenId) public{
+        require(ownerOf(tokenId) == msg.sender, "WITHDRAW: Not owner!");
         uint256 quotedPrice = price(totalSupply());
         
         _burn(tokenId);
