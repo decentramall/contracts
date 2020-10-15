@@ -54,9 +54,6 @@ contract('Decentramall', (accounts) => {
             await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: ownerA });
             const tx = await decentramallInstance.buy({ from: ownerA });
             const isOwner = await decentramallInstance.ownerOf(tx.logs[1].args[1].toString());
-            
-            const test = await decentramallInstance.balanceOf(ownerA, {from: ownerA});
-            console.log(test);
             expect(isOwner).to.be.eq(ownerA);
             const currentBalance = toBigNumber(await daiInstance.balanceOf(ownerA));
             // console.log("Current Balance: ", currentBalance.toString());

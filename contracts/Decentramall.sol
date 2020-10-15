@@ -126,7 +126,12 @@ contract Decentramall is ERC721 {
     function rent(uint256 tokenId, string memory _tokenURI) public {
         require(ownerOf(tokenId) == address(this), "RENT: Doesn't exist!");
         require(spaceInfo[tokenId].expiryBlock < block.number, "RENT: Token is already rented!");
-        require(ownerOf(uint256(keccak256(abi.encodePacked(msg.sender)))) != msg.sender, "RENT: Can't rent if address owns SPACE token"); 
+
+        // This is gonna be big ouch for SPACE traders
+        for(uint i=0; i<balanceOf(msg.sender); i++){
+            require(ownerOf(uint256(keccak256(abi.encodePacked(msg.sender)))) != msg.sender, "RENT: Can't rent if address owns SPACE token");
+        }
+        
         uint256 actualPrice = price(totalSupply() + 1);
         uint256 rentPrice = actualPrice / 120; //In 18 decimals
         IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
