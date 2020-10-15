@@ -168,46 +168,27 @@ contract('Decentramall', (accounts) => {
         beforeEach(async () => {
             daiInstance = await DAI.new(accounts);
             decentramallInstance = await Decentramall.new(1200, 2500, 100000, daiInstance.address);
-        });
-
-        it('should rent successfully', async () => {
             const priceSPACE = toBigNumber(await decentramallInstance.price(1)).toString();
             await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: ownerA });
             const tx = await decentramallInstance.buy({ from: ownerA });
-            const tokenId = tx.logs[1].args[1].toString();
-            const isOwner = await decentramallInstance.ownerOf(tokenId);
             // console.log("tx log object", tx);
-            expect(isOwner).to.be.eq(ownerA);
+            tokenId = tx.logs[1].args[1].toString();
+        });
+
+        it('should rent successfully', async () => {
             const depositTx = await decentramallInstance.deposit(tokenId, {from: ownerA});
             // console.log("tx log object", depositTx);
             const newOwner = await decentramallInstance.ownerOf(tokenId);
             expect(newOwner).to.be.eq(decentramallInstance.address);
         });
-        // it('should maintain ownership', async () => {
-        //     const priceSPACE = toBigNumber(await decentramallInstance.price(1)).toString();
-        //     await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: ownerA });
-        //     const tx = await decentramallInstance.buy({ from: ownerA });
-        //     const tokenId = tx.logs[1].args[1].toString();
-        //     const isOwner = await decentramallInstance.ownerOf(tokenId);
-        //     const isRentableOwner = await decentramallInstance.spaceInfo.call(ownerA);
-        //     console.log(isRentableOwner);
-        //     console.log("tx log object", tx);
-        //     expect(isOwner).to.be.eq(ownerA);
-        //     // console.log("tx log object", depositTx);
-        //     const newOwner = await decentramallInstance.ownerOf(tokenId);
-        //     expect(newOwner).to.be.eq(decentramallInstance.address);
-        // });
-
-        it('should withdraw successfully', async () => {
-            const priceSPACE = toBigNumber(await decentramallInstance.price(1)).toString();
-            await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: ownerA });
-            const tx = await decentramallInstance.buy({ from: ownerA });
-            const tokenId = tx.logs[1].args[1].toString();
-            const isOwner = await decentramallInstance.ownerOf(tokenId);
-            expect(isOwner).to.be.eq(ownerA);
+        it('should claim rent successfully', async () => {
             const depositTx = await decentramallInstance.deposit(tokenId, {from: ownerA});
-            const mallOwner = await decentramallInstance.ownerOf(tokenId);
-            expect(mallOwner).to.be.eq(decentramallInstance.address);
+            const withdrawTx = await decentramallInstance.withdraw(tokenId, {from: ownerA});
+            const newOwner = await decentramallInstance.ownerOf(tokenId);
+            expect(newOwner).to.be.eq(ownerA);
+        });
+        it('should claim rent via withdraw successfully', async () => {
+            const depositTx = await decentramallInstance.deposit(tokenId, {from: ownerA});
             const withdrawTx = await decentramallInstance.withdraw(tokenId, {from: ownerA});
             const newOwner = await decentramallInstance.ownerOf(tokenId);
             expect(newOwner).to.be.eq(ownerA);

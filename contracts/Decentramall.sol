@@ -80,7 +80,7 @@ contract Decentramall is ERC721 {
         uint256 currentSupply = totalSupply();
         uint256 estimatedPrice = price(currentSupply + 1);
 
-        require(currentSupply < uint256(currentLimit), "Max Supply Reached!");
+        require(currentSupply < uint256(currentLimit), "BUY: Max Supply Reached!");
 
         IERC20(dai).transferFrom(msg.sender, address(this), estimatedPrice);
         uint256 tokenId = uint256(keccak256(abi.encodePacked(msg.sender)));
@@ -93,7 +93,6 @@ contract Decentramall is ERC721 {
      * @dev Sell SPACE
      */
     function sell(uint256 tokenId) public{
-        require(ownerOf(tokenId) == msg.sender, "Fake token!");
         uint256 quotedPrice = price(totalSupply());
         
         _burn(tokenId);
@@ -106,7 +105,7 @@ contract Decentramall is ERC721 {
      * @notice Must ensure that it is your space before you can deposit it. This is to prevent double SPACE hogging
      */
     function deposit(uint256 tokenId) public {
-        require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "Not owner!");
+        require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "DEPOSIT: Not owner!");
         transferFrom(msg.sender, address(this), tokenId);
         emit DepositSpace(msg.sender, tokenId);
     }
@@ -122,7 +121,7 @@ contract Decentramall is ERC721 {
     function rent(uint256 tokenId, string memory _tokenURI) public {
         require(
             spaceInfo[tokenId].expiryBlock < block.number,
-            "Token is already rented!"
+            "RENT: Token is already rented!"
         );
         uint256 actualPrice = price(totalSupply() + 1);
         uint256 rentPrice = actualPrice / 120; //In 18 decimals
@@ -144,8 +143,8 @@ contract Decentramall is ERC721 {
      * @notice Must be actual owner (proof if identity)
      **/
     function claim(uint256 tokenId) public {
-        require(ownerOf(tokenId) == address(this), "Doesn't exist!");
-        require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "Not owner!");
+        require(ownerOf(tokenId) == address(this), "CLAIM: Doesn't exist!");
+        require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "CLAIM: Not owner!");
 
         uint256 toClaim = spaceInfo[tokenId].rentalEarned;
         spaceInfo[tokenId].rentalEarned -= toClaim;
@@ -163,8 +162,8 @@ contract Decentramall is ERC721 {
      * Then, is the hash of the owner's address equal to that tokenID (proof of identity)
      **/
     function withdraw(uint256 tokenId) public{
-        require(ownerOf(tokenId) == address(this), "Doesn't exist!");
-        require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "Not owner!");
+        require(ownerOf(tokenId) == address(this), "WITHDRAW: Doesn't exist!");
+        require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "WITHDRAW: Not owner!");
         
         //Claim rent
         claim(tokenId);
