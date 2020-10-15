@@ -25,26 +25,39 @@ contract Decentramall is ERC721 {
     address public dai;
 
     struct SpaceDetails {
-        address owner;
-        address renter;
-        uint256 rentalEarned;
-        uint256 expiryBlock;
+        address renter; // The address who rent
+        uint256 rentalEarned; // The amount earnt
+        uint256 expiryBlock; // The block the rent expires
+        bool isRentable; // Can be rented
+        bool isValid; // True if purchased & not sold
+    }
+
+    //Mapping of tokenId to SpaceDetails
+    mapping(address => SpaceDetails) public spaceInfo;
+
+    modifier isOwner(address caller){
+        require(spaceInfo[caller].isValid == true);
+        _;
     }
 
     event BuySpace(address buyer, uint256 tokenId, uint256 price);
     event SellSpace(address seller, uint256 tokenId, uint256 price);
+    event DepositSpace(address depositor, uint256 tokenId);
+    event WithdrawSpace(address withdrawer, uint256 tokenId);
+    event RentSpace(address renter, uint256 tokenId, uint256 expiryBlock, uint256 rentPaid);
+    event ClaimRent(address owner, uint256 tokenId, uint256 rentClaimed);
 
     constructor(
         int256 _currentLimit,
         int256 _maxPrice,
         int256 _steepness,
-        address _registry
+        address _dai
     ) public ERC721("SPACE", "SPACE") {
         currentLimit = _currentLimit;
         maxPrice = _maxPrice;
         midpoint = currentLimit/2;
         steepness = _steepness;
-        registry = _registry;
+        dai = _dai;
     }
 
     /**
@@ -70,14 +83,14 @@ contract Decentramall is ERC721 {
     /**
      * @dev Buy SPACE
      */
-    function buy() public payable{
+    function buy() public {
         uint256 currentSupply = totalSupply();
         uint256 estimatedPrice = price(currentSupply + 1);
 
-        require(currentSupply < currentLimit, "Max Supply Reached!");
-        require(msg.value >= estimatedPrice, "Insufficient Funds to Purchase!");
+        require(currentSupply < uint256(currentLimit), "Max Supply Reached!");
 
-        uint256 tokenId = uint256(keccak256(msg.sender));
+        IERC20(dai).transferFrom(msg.sender, address(this), estimatedPrice);
+        uint256 tokenId = uint256(keccak256(abi.encodePacked(msg.sender)));
         _mint(msg.sender, tokenId);
         emit BuySpace(msg.sender, tokenId, estimatedPrice);
     }
@@ -85,11 +98,54 @@ contract Decentramall is ERC721 {
     /**
      * @dev Sell SPACE
      */
-    function sell(uint256 tokenId) private{
+    function sell(uint256 tokenId) public{
+        require(ownerOf(tokenId) == msg.sender, "Fake token!");
+        uint256 quotedPrice = price(totalSupply());
+
         _burn(tokenId);
-        uint256 quotedPrice = price(totalSupply()) * multiplier;
         IERC20(dai).transfer(msg.sender, quotedPrice);
+        emit SellSpace(msg.sender, tokenId, quotedPrice);
+    }
+
+    /**
+     * @dev Deposit SPACE to be rented out
+     */
+    function deposit(uint256 tokenId) public {
+        transferFrom(msg.sender, address(this), tokenId);
+        spaceInfo[msg.sender].isRentable = true;
+    }
+
+    /**
+     * @dev Rent SPACE
+     */
+    function rent(uint256 tokenId) public{
+        
+    }
+
+    /**
+     * @dev Claim the rent earned
+     * @param tokenId id of the SPACE token
+     * @notice Owner can claim rent right on Day 1 of renting
+     **/
+    function claim(uint256 tokenId) public {
+        require(ownerOf(tokenId) == msg.sender, "Not owner!");
+        uint256 toClaim = spaceInfo[msg.sender].rentalEarned;
+        IERC20(dai).transfer(msg.sender, toClaim);
+        spaceInfo[msg.sender].rentalEarned -= toClaim;
+        emit ClaimRent(msg.sender, tokenId, toClaim);
+    }
+
+    /**
+     * @dev Withdraw space
+     * @param tokenId id of the SPACE token
+     * @notice Withdrawing also claims rent
+     **/
+    function withdraw(uint256 tokenId) public{
+        require(ownerOf(tokenId) == msg.sender, "Fake token!");
+        uint256 quotedPrice = price(totalSupply());
+
         _burn(tokenId);
-        emit SellToken(msg.sender, quotedPrice, tokenId);
+        IERC20(dai).transfer(msg.sender, quotedPrice);
+        emit SellSpace(msg.sender, tokenId, quotedPrice);
     }
 }
