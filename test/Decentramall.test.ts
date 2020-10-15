@@ -211,69 +211,38 @@ contract('Decentramall', (accounts) => {
             await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
             await expectRevert(decentramallInstance.rent(tokenId, 'some-fake-cid', { from: renterA }), "ERC20: transfer amount exceeds balance");
         });
+        it('should fail rent (already rented)', async () => {
+            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
+            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
+            await decentramallInstance.rent(tokenId, 'some-fake-cid', { from: renterA });
+            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
+            await expectRevert(decentramallInstance.rent(tokenId, 'some-fake-cid', { from: renterA }), "RENT: Token is already rented!");
+        });
         it('should claim rent successfully', async () => {
-            const depositTx = await decentramallInstance.deposit(tokenId, {from: ownerA});
-            const withdrawTx = await decentramallInstance.withdraw(tokenId, {from: ownerA});
-            const newOwner = await decentramallInstance.ownerOf(tokenId);
-            expect(newOwner).to.be.eq(ownerA);
+            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
+            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
+            await decentramallInstance.rent(tokenId, 'some-fake-cid', { from: renterA });
+            const prevBalance = parseFloat(toBigNumber(await daiInstance.balanceOf(ownerA)).toString());
+            // console.log("prev", prevBalance)
+            const tx = await decentramallInstance.claim(tokenId, {from: ownerA});
+            const newBalance = parseFloat(toBigNumber(await daiInstance.balanceOf(ownerA)).toString());
+            // console.log("newBalance", newBalance)
+            expect(newBalance > prevBalance).to.be.equal(true);
+        });
+        it('should fail claim other persons rent', async () => {
+            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
+            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
+            await decentramallInstance.rent(tokenId, 'some-fake-cid', { from: renterA });
+            await expectRevert(decentramallInstance.claim(tokenId, {from: renterA}), "CLAIM: Not owner!");
         });
         it('should claim rent via withdraw successfully', async () => {
-            const depositTx = await decentramallInstance.deposit(tokenId, {from: ownerA});
+            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
+            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
+            await decentramallInstance.rent(tokenId, 'some-fake-cid', { from: renterA });
+            const prevBalance = parseFloat(toBigNumber(await daiInstance.balanceOf(ownerA)).toString());
             const withdrawTx = await decentramallInstance.withdraw(tokenId, {from: ownerA});
-            const newOwner = await decentramallInstance.ownerOf(tokenId);
-            expect(newOwner).to.be.eq(ownerA);
+            const newBalance = parseFloat(toBigNumber(await daiInstance.balanceOf(ownerA)).toString());
+            expect(newBalance > prevBalance).to.be.equal(true);
         });
-
-        // it('should not allow someone else to deposit', async () => {
-        //     const priceSPACE = toBigNumber(await decentramallInstance.price(1)).toString();
-        //     await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: ownerA });
-        //     const tx = await decentramallInstance.buy({ from: ownerA });
-        //     const tokenId = tx.logs[1].args[1].toString();
-        //     const isOwner = await decentramallInstance.ownerOf(tokenId);
-        //     expect(isOwner).to.be.eq(ownerA);
-
-        //     const depositTx = await decentramallInstance.deposit(tokenId, {from: ownerA});
-        //     const newOwner = await decentramallInstance.ownerOf(tokenId);
-        //     expect(newOwner).to.be.eq(decentramallInstance.address);
-        // });
-
-        // it('should not allow someone else to deposit (wrong hash)', async () => {
-        //     const priceSPACE = toBigNumber(await decentramallInstance.price(1)).toString();
-        //     await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: ownerA });
-        //     const tx = await decentramallInstance.buy({ from: ownerA });
-        //     const tokenId = tx.logs[1].args[1].toString();
-        //     const isOwner = await decentramallInstance.ownerOf(tokenId);
-        //     expect(isOwner).to.be.eq(ownerA);
-
-        //     const depositTx = await decentramallInstance.deposit(tokenId, {from: ownerA});
-        //     const newOwner = await decentramallInstance.ownerOf(tokenId);
-        //     expect(newOwner).to.be.eq(decentramallInstance.address);
-        // });
-
-        // it('should not allow someone else to withdraw', async () => {
-        //     const priceSPACE = toBigNumber(await decentramallInstance.price(1)).toString();
-        //     await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: ownerA });
-        //     const tx = await decentramallInstance.buy({ from: ownerA });
-        //     const tokenId = tx.logs[1].args[1].toString();
-        //     const isOwner = await decentramallInstance.ownerOf(tokenId);
-        //     expect(isOwner).to.be.eq(ownerA);
-
-        //     const depositTx = await decentramallInstance.deposit(tokenId, {from: ownerA});
-        //     const newOwner = await decentramallInstance.ownerOf(tokenId);
-        //     expect(newOwner).to.be.eq(decentramallInstance.address);
-        // });
-
-        // it('should not allow withdraw as it doesnt exist in contract', async () => {
-        //     const priceSPACE = toBigNumber(await decentramallInstance.price(1)).toString();
-        //     await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: ownerA });
-        //     const tx = await decentramallInstance.buy({ from: ownerA });
-        //     const tokenId = tx.logs[1].args[1].toString();
-        //     const isOwner = await decentramallInstance.ownerOf(tokenId);
-        //     expect(isOwner).to.be.eq(ownerA);
-
-        //     const depositTx = await decentramallInstance.deposit(tokenId, {from: ownerA});
-        //     const newOwner = await decentramallInstance.ownerOf(tokenId);
-        //     expect(newOwner).to.be.eq(decentramallInstance.address);
-        // });
     });
 });

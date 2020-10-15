@@ -161,11 +161,13 @@ contract Decentramall is ERC721 {
      * @notice We need to check for a few things.
      * First, does this token exist in this contract
      * Then, is the hash of the owner's address equal to that tokenID (proof of identity)
+     * Lastly, ensure that it is not currently being rented
      **/
     function withdraw(uint256 tokenId) public{
         require(ownerOf(tokenId) == address(this), "WITHDRAW: Doesn't exist!");
         require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "WITHDRAW: Not owner!");
-        
+        require(spaceInfo[tokenId].expiryBlock < block.number, "WITHDRAW: Token is being rented!");
+
         //Claim rent
         claim(tokenId);
 
