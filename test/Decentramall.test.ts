@@ -113,10 +113,11 @@ contract('Decentramall', (accounts) => {
             const tokenId = tx.logs[1].args[1].toString();
             const isOwner = await decentramallInstance.ownerOf(tokenId);
             expect(isOwner).to.be.eq(ownerA);
-
+            console.log("Token ID:", tokenId);
             const depositTx = await decentramallInstance.deposit(tokenId, {from: ownerA});
-
+            console.log("Hopefully same Token ID:", depositTx.logs[1].args[2].toString());
             const withdrawTx = await decentramallInstance.withdraw(tokenId, {from: ownerA});
+            console.log("Hopefully same Token ID AGAIN:", withdrawTx.logs[1].args[2].toString());
             const newOwner = await decentramallInstance.ownerOf(tokenId);
             expect(newOwner).to.be.eq(ownerA);
         });

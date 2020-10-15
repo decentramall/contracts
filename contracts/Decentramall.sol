@@ -31,7 +31,7 @@ contract Decentramall is ERC721 {
     }
 
     //Mapping of tokenId to SpaceDetails
-    mapping(address => SpaceDetails) public spaceInfo;
+    mapping(uint256 => SpaceDetails) public spaceInfo;
 
     event BuySpace(address buyer, uint256 tokenId, uint256 price);
     event SellSpace(address seller, uint256 tokenId, uint256 price);
@@ -113,14 +113,34 @@ contract Decentramall is ERC721 {
 
     /**
      * @dev Rent SPACE
+     * @param tokenId id of the SPACE token
+     * @param _tokenURI unique id for the store
+     * @notice The SPACE must be rentable, which means it must exist in this contract & 
+     * expiryBlock < block.number
+     * @notice Rent per year cost 1/10 of the price to buy new & lasts for 1 month (187714 blocks)
      */
-    function rent(uint256 tokenId) public{
-        
+    function rent(uint256 tokenId, string memory _tokenURI) public {
+        require(
+            spaceInfo[tokenId].expiryBlock < block.number,
+            "Token is already rented!"
+        );
+        uint256 actualPrice = price(totalSupply() + 1);
+        uint256 rentPrice = actualPrice / 120; //In 18 decimals
+        IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
+        uint256 newExpBlock = block.number + 187714;
+
+        spaceInfo[tokenId].rentedTo = msg.sender;
+        spaceInfo[tokenId].rentalEarned = rentPrice;
+        spaceInfo[tokenId].expiryBlock = newExpBlock;
+
+        _setTokenURI(tokenId, _tokenURI);
+        emit RentSpace(msg.sender, tokenId, newExpBlock, rentPrice);
     }
 
     /**
      * @dev Claim the rent earned
      * @param tokenId id of the SPACE token
+     * @notice Owner can claim rent right on Day 1 of renting
      * @notice Owner can claim rent right on Day 1 of renting
      **/
     function claim(uint256 tokenId) public {
@@ -141,7 +161,7 @@ contract Decentramall is ERC721 {
      **/
     function withdraw(uint256 tokenId) public{
         require(ownerOf(tokenId) == address(this), "Doesn't exist!");
-        require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "Not owner!");
+        // require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "Not owner!");
         
         //Claim rent
         claim(tokenId);
