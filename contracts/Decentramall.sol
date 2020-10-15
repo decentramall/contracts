@@ -164,7 +164,7 @@ contract Decentramall is ERC721 {
      **/
     function withdraw(uint256 tokenId) public{
         require(ownerOf(tokenId) == address(this), "Doesn't exist!");
-        // require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "Not owner!");
+        require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "Not owner!");
         
         //Claim rent
         claim(tokenId);
