@@ -141,13 +141,16 @@ contract Decentramall is ERC721 {
      * @dev Claim the rent earned
      * @param tokenId id of the SPACE token
      * @notice Owner can claim rent right on Day 1 of renting
-     * @notice Owner can claim rent right on Day 1 of renting
+     * @notice Must be actual owner (proof if identity)
      **/
     function claim(uint256 tokenId) public {
-        require(ownerOf(tokenId) == msg.sender, "Not owner!");
+        require(ownerOf(tokenId) == address(this), "Doesn't exist!");
+        require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "Not owner!");
+
         uint256 toClaim = spaceInfo[tokenId].rentalEarned;
-        IERC20(dai).transfer(msg.sender, toClaim);
         spaceInfo[tokenId].rentalEarned -= toClaim;
+        
+        IERC20(dai).transfer(msg.sender, toClaim);
         emit ClaimRent(msg.sender, tokenId, toClaim);
     }
 
