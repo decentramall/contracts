@@ -38,7 +38,7 @@ contract('Decentramall', (accounts) => {
             expect(newOwner).to.be.eq(decentramallInstance.address);
         });
         it('should fail deposit', async () => {
-            await expectRevert(decentramallInstance.deposit(tokenId, "375427", {from: ownerA}), "DEPOSIT: Stake duration has to be more than 375428 blocks!");
+            await expectRevert(decentramallInstance.deposit(tokenId, "374", {from: ownerA}), "DEPOSIT: Stake duration has to be more than 375428 blocks!");
         });
         it('should withdraw successfully [WARNING! Remember to change the block times!]', async () => {
             await decentramallInstance.deposit(tokenId, "375",{from: ownerA});

@@ -36,8 +36,7 @@ contract('Decentramall', (accounts) => {
         });
 
         it('should rent successfully', async () => {
-            const rentPriceSPACE = toBigNumber(await decentramallInstance.getRentPrice(187)).toString(); //For testing
-            console.log("rent price", rentPriceSPACE)
+            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
             const previousBalance = parseFloat(toBigNumber(await daiInstance.balanceOf(renterA)).toString());
             await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
             await decentramallInstance.rent(tokenId, 'some-fake-cid', "187", { from: renterA })

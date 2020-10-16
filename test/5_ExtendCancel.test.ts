@@ -71,6 +71,8 @@ contract('Decentramall', (accounts) => {
             const old = await decentramallInstance.spaceInfo(tokenId, {from:renterA});
             const oldBlock = parseInt(old[4].toString());
 
+            const priceSPACE = toBigNumber(await decentramallInstance.price(2)).toString(); // Some big number for the sake of approving
+            await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: renterA });
             await decentramallInstance.extendRent(tokenId, "100", {from: renterA});
             
             const newData = await decentramallInstance.spaceInfo(tokenId, {from:renterA});
