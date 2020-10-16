@@ -118,3 +118,5 @@ types/
 db_ganache/
 ganache-db-devenv/
 storage/
+
+scripts/quicktest.sh
