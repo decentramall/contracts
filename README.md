@@ -49,9 +49,19 @@ In order to make it work with the webui, you also need to run `npm run generate-
 
 ## Test & Coverage
 
-To run tests, change minDeposit to 375 minRent to 187 in Decentramall.sol and day to 6
+To run tests, make sure to use the ForTesting.sol!
 
 ```bash
 $ npm run test
 $ npm run coverage
 ```
+
+## Testnet Contract Address
+
+- Rinkeby
+  - FixedMath.sol (Custom int256 library to handle fixed point numbers & square root. Some inspiration drawn from [FixidityLib](https://github.com/CementDAO/Fixidity))
+    - Contract Address: **0x3e396C3148676EBCf0E51F64aAA1222fA98e32cf**
+  - DAI.sol (Custom DAI to try out purchasing SPACE)
+    - Contract Address: **0x36E6E4ca0C3f310bFc09ea9D87201D9aec2d3c2B**
+  - Decentramall.sol (The real deal)
+    - Contract Address: **0xb5e9CA24cE71643DBbe4b54917F4683478746f25**
