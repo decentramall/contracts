@@ -142,7 +142,7 @@ contract Decentramall is ERC721 {
         require(spaceInfo[tokenId].expiryBlock < block.number, "RENT: Token is already rented!");
 
         uint256 rentUntil = block.number + rentDuration;
-        require(rentUnti <= spaceInfo[tokenId].maxRentableBlock, "RENT: Rent duration exceed maxRentableBlock!");
+        require(rentUntil <= spaceInfo[tokenId].maxRentableBlock, "RENT: Rent duration exceed maxRentableBlock!");
 
         // This is gonna be big ouch for SPACE traders
         for(uint i=0; i<balanceOf(msg.sender); i++){
@@ -210,7 +210,7 @@ contract Decentramall is ERC721 {
         require(spaceInfo[tokenId].rentedTo == msg.sender, "EXTEND: Not renter!");
 
         uint256 rentUntil = spaceInfo[tokenId].expiryBlock + rentDuration;
-        require(rentUnti <= spaceInfo[tokenId].maxRentableBlock, "EXTEND: Rent duration exceed maxRentableBlock!");
+        require(rentUntil <= spaceInfo[tokenId].maxRentableBlock, "EXTEND: Rent duration exceed maxRentableBlock!");
 
         // Finding price
         uint256 actualPrice = price(totalSupply() + 1);
@@ -224,7 +224,6 @@ contract Decentramall is ERC721 {
         spaceInfo[tokenId].expiryBlock = rentUntil;
         cooldownByAddress[msg.sender] = rentUntil;
 
-        _setTokenURI(tokenId, _tokenURI);
         emit ExtendRent(msg.sender, tokenId, rentUntil, rentPrice);
     }
 
