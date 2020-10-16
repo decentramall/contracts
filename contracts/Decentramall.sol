@@ -27,6 +27,7 @@ contract Decentramall is ERC721 {
     struct SpaceDetails {
         address rentedTo; // The address who rent
         uint256 rentalEarned; // The amount earnt
+        uint256 rentPrice; // The most recent rent price (for cancel function)
         uint256 expiryBlock; // The block the rent expires
     }
 
@@ -122,11 +123,12 @@ contract Decentramall is ERC721 {
      * @param tokenId id of the SPACE token
      * @param _tokenURI unique id for the store
      * @notice The SPACE must be rentable, which means it must exist in this contract, msg.sender does not own a space token,
-     * expiryBlock < block.number
+     * expiryBlock < block.number & cooldown < block.number
      * @notice Rent per year cost 1/10 of the price to buy new & lasts for 1 month (187714 blocks)
      */
     function rent(uint256 tokenId, string memory _tokenURI) public {
         require(ownerOf(tokenId) == address(this), "RENT: Doesn't exist!");
+        require(cooldownByAddress[msg.sender] < block.number, "RENT: Cooldown active!");
         require(spaceInfo[tokenId].expiryBlock < block.number, "RENT: Token is already rented!");
 
         // This is gonna be big ouch for SPACE traders
@@ -140,7 +142,8 @@ contract Decentramall is ERC721 {
         uint256 newExpBlock = block.number + 187714;
 
         spaceInfo[tokenId].rentedTo = msg.sender;
-        spaceInfo[tokenId].rentalEarned = rentPrice;
+        spaceInfo[tokenId].rentalEarned += rentPrice;
+        spaceInfo[tokenId].rentPrice = rentPrice;
         spaceInfo[tokenId].expiryBlock = newExpBlock;
         cooldownByAddress[msg.sender] = newExpBlock;
 
@@ -151,38 +154,33 @@ contract Decentramall is ERC721 {
     /**
      * @dev Cancel Rent SPACE
      * @param tokenId id of the SPACE token
-     * @param _tokenURI unique id for the store
-     * @notice The SPACE must be rentable, which means it must exist in this contract, msg.sender does not own a space token,
-     * expiryBlock < block.number
-     * @notice Rent per year cost 1/10 of the price to buy new & lasts for 1 month (187714 blocks)
+     * @notice Forces address to wait two days before renting again
+     * @notice Currently refunds everything back
+     * @notice Requires: token to exist, token to be rented, is renter, funds are not claimed yet (will probably make cooldown in future)
      */
-    function cancelRent(uint256 tokenId, string memory _tokenURI) public {
-        require(ownerOf(tokenId) == address(this), "RENT: Doesn't exist!");
-        require(spaceInfo[tokenId].expiryBlock < block.number, "RENT: Token is already rented!");
-
-        // This is gonna be big ouch for SPACE traders
-        for(uint i=0; i<balanceOf(msg.sender); i++){
-            require(ownerOf(uint256(keccak256(abi.encodePacked(msg.sender)))) != msg.sender, "RENT: Can't rent if address owns SPACE token");
-        }
+    function cancelRent(uint256 tokenId) public {
+        require(ownerOf(tokenId) == address(this), "CANCEL: Doesn't exist!");
+        require(spaceInfo[tokenId].expiryBlock > block.number, "CANCEL: Token not rented!");
+        require(spaceInfo[tokenId].rentedTo == msg.sender, "CANCEL: Not renter!");
+        require(spaceInfo[tokenId].rentalEarned > spaceInfo[tokenId].rentPrice, "CANCEL: Funds already claimed!");
         
-        uint256 actualPrice = price(totalSupply() + 1);
-        uint256 rentPrice = actualPrice / 120; //In 18 decimals
-        IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
-        uint256 newExpBlock = block.number + 187714;
+        // Cooldown
+        cooldownByAddress[msg.sender] = block.number + 12800; // Roughly two days
 
-        spaceInfo[tokenId].rentedTo = msg.sender;
-        spaceInfo[tokenId].rentalEarned = rentPrice;
-        spaceInfo[tokenId].expiryBlock = newExpBlock;
-        cooldownByAddress[msg.sender] = newExpBlock;
+        // Refund
+        uint256 refund = spaceInfo[tokenId].rentPrice;
+        spaceInfo[tokenId].rentalEarned -= refund;
+        IERC20(dai).transferFrom(address(this), msg.sender, refund);
 
-        _setTokenURI(tokenId, _tokenURI);
-        emit RentSpace(msg.sender, tokenId, newExpBlock, rentPrice);
+        // Remove rent status
+        spaceInfo[tokenId].expiryBlock = block.number;
+        
+        emit CancelRent(msg.sender, tokenId);
     }
 
     /**
      * @dev Extend Rent SPACE
      * @param tokenId id of the SPACE token
-     * @param _tokenURI unique id for the store
      * @notice The SPACE must be rentable, which means it must exist in this contract, msg.sender does not own a space token,
      * expiryBlock < block.number
      * @notice Rent per year cost 1/10 of the price to buy new & lasts for 1 month (187714 blocks)
