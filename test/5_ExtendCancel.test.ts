@@ -18,6 +18,7 @@ contract('Decentramall', (accounts) => {
     const ownerA = accounts[0];
     const renterA = accounts[1];
     const ownerB = accounts[2];
+    const renterB = accounts[3];
     let decentramallInstance: DecentramallInstance;
     let daiInstance: ERC20Instance;
     let tokenId: string;
@@ -42,98 +43,57 @@ contract('Decentramall', (accounts) => {
             const nowBlock = await web3.eth.getBlockNumber();
             const spaceInfoData = await decentramallInstance.spaceInfo(tokenId, {from:renterA});
             const rentedTo = spaceInfoData[0];
-            const expiryBlock = spaceInfoData[4];
+            const expiryBlock = parseInt(spaceInfoData[4].toString());
             
             await expect(rentedTo).to.be.equal("0x0000000000000000000000000000000000000000");
-            await expect(expiryBlock).to.be.equal(nowBlock);
+            await expect(expiryBlock).to.be.equal(parseInt(nowBlock));
         });
-        it('should fail cancel (too short)', async () => {
-            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
-            const previousBalance = parseFloat(toBigNumber(await daiInstance.balanceOf(renterA)).toString());
-            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
-            await expectRevert(decentramallInstance.rent(tokenId, 'some-fake-cid', "186", { from: renterA }), "RENT: Rent duration has to be more than 187714 blocks!");
-        });
-        it('should fail rent (not enough funds)', async () => {
-            const rentPriceSPACE = Math.floor(parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(22520).multipliedBy(187).toString())).toString();
-            // console.log("rent price", rentPriceSPACE);
-            // const bal = await daiInstance.balanceOf(noMoney);
-            // console.log(bal.toString());
-            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: noMoney });
-            await expectRevert(decentramallInstance.rent(tokenId, 'some-fake-cid', "187", { from: noMoney }), "ERC20: transfer amount exceeds balance");
-        });
-        it('should fail rent (already rented)', async () => {
-            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
-            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
-            await decentramallInstance.rent(tokenId, 'some-fake-cid', "187", { from: renterA });
-            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterB });
-            await expectRevert(decentramallInstance.rent(tokenId, 'some-fake-cid', "187", { from: renterB }), "RENT: Token is already rented!");
-        });
-        it('should fail rent (nonexistent token)', async () => {
+        it('should fail cancel (not rented)', async () => {
             const priceSPACE = toBigNumber(await decentramallInstance.price(2)).toString();
             await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: ownerB });
             const tx = await decentramallInstance.buy({ from: ownerB });
             tokenId = tx.logs[1].args[1].toString();
-            const rentPriceSPACE = Math.floor(parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString())).toString();
-            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
-            await expectRevert(decentramallInstance.rent(tokenId, 'some-fake-cid', "187", { from: renterA }), "RENT: Doesn't exist!");
-        });
-        it('should claim rent successfully', async () => {
-            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
-            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
-            await decentramallInstance.rent(tokenId, 'some-fake-cid', "187", { from: renterA });
-            
-            const spaceInfoData = await decentramallInstance.spaceInfo(tokenId, {from:renterA});
-            const oldBalance = parseFloat(spaceInfoData[1].toString());
+            await decentramallInstance.deposit(tokenId, "375", {from: ownerB});
 
-            for(let i=0; i<7; i++){
+            await expectRevert(decentramallInstance.cancelRent(tokenId, {from:renterB}), "CANCEL: Token not rented!");
+        });
+        it('should fail cancel (not renter)', async () => {
+            await expectRevert(decentramallInstance.cancelRent(tokenId, {from:renterB}), "CANCEL: Not renter!");
+        });
+        it('should fail cancel (past 1 day)', async () => {
+            for(let i=0; i<8; i++){
                 await advanceBlock();
             }
-            
-            await decentramallInstance.claim(tokenId, {from:ownerA});
-            const newData = await decentramallInstance.spaceInfo(tokenId, {from:renterA});
-            const newBalance = parseFloat(newData[1].toString());
 
-            expect(oldBalance > newBalance).to.be.equal(true);
+            await expectRevert(decentramallInstance.cancelRent(tokenId, {from:renterA}), "CANCEL: Can't cancel after 1 day!");
         });
-        it('should fail claim rent', async () => {
-            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
-            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
-            await decentramallInstance.rent(tokenId, 'some-fake-cid', "187", { from: renterA });
-            const prevBalance = parseFloat(toBigNumber(await daiInstance.balanceOf(ownerA)).toString());
-            await expectRevert(decentramallInstance.claim(tokenId, {from: ownerA}), "CLAIM: Can't claim before 1 day!");
+        it('should extend successfully', async () => {
+            const old = await decentramallInstance.spaceInfo(tokenId, {from:renterA});
+            const oldBlock = parseInt(old[4].toString());
+
+            await decentramallInstance.extendRent(tokenId, "100", {from: renterA});
+            
+            const newData = await decentramallInstance.spaceInfo(tokenId, {from:renterA});
+            const rentedTo = newData[0];
+            const newBlock = parseInt(newData[4].toString());
+            
+            await expect(rentedTo).to.be.equal(renterA);
+            await expect(newBlock).to.be.equal(oldBlock+100);
         });
-        it('should fail claim other persons rent', async () => {
-            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
-            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
-            await decentramallInstance.rent(tokenId, 'some-fake-cid', "187", { from: renterA });
-            await expectRevert(decentramallInstance.claim(tokenId, {from: renterA}), "CLAIM: Not owner!");
-        });
-        it('should fail rent as space owner', async () => {
+        it('should fail extend (not rented)', async () => {
             const priceSPACE = toBigNumber(await decentramallInstance.price(2)).toString();
-            await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: renterA });
-            await decentramallInstance.buy({ from: renterA });
-            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
-            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
-            await expectRevert(decentramallInstance.rent(tokenId, 'some-fake-cid', "187", {from: renterA}), "RENT: Can't rent if address owns SPACE token"); 
+            await daiInstance.approve(decentramallInstance.address, priceSPACE, { from: ownerB });
+            const tx = await decentramallInstance.buy({ from: ownerB });
+            tokenId = tx.logs[1].args[1].toString();
+            await decentramallInstance.deposit(tokenId, "375", {from: ownerB});
+
+            await expectRevert(decentramallInstance.extendRent(tokenId, "1", {from:renterB}), "EXTEND: Token not rented!");
         });
-        it('should claim rent via withdraw successfully', async () => {
-            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
-            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
-            await decentramallInstance.rent(tokenId, 'some-fake-cid', "187", { from: renterA });
-            await decentramallInstance.cancelRent(tokenId, { from: renterA });
-            
-            const spaceInfoData = await decentramallInstance.spaceInfo(tokenId, {from:renterA});
-            const oldBalance = parseFloat(spaceInfoData[1].toString());
-
-            for(let i=0; i<375; i++){
-                await advanceBlock();
-            }
-
-            const withdrawTx = await decentramallInstance.withdraw(tokenId, {from: ownerA});
-            const newData = await decentramallInstance.spaceInfo(tokenId, {from:renterA});
-            const newBalance = parseFloat(newData[1].toString());
-
-            expect(oldBalance > newBalance).to.be.equal(true);
+        it('should fail extend (not renter)', async () => {
+            await expectRevert(decentramallInstance.extendRent(tokenId, "100", {from:renterB}), "EXTEND: Not renter!");
+        });
+        it('should fail extend (exceed maxRentableBlock)', async () => {
+            await expectRevert(decentramallInstance.extendRent(tokenId, "189", {from:renterA}), "EXTEND: Rent duration exceed maxRentableBlock!");
         });
     });
 });
