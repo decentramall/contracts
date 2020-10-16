@@ -191,6 +191,7 @@ contract Decentramall is ERC721 {
         IERC20(dai).transferFrom(address(this), msg.sender, refund);
 
         // Remove rent status
+        spaceInfo[tokenId].rentedTo = address(0); // Safer, prevents accidental issues
         spaceInfo[tokenId].expiryBlock = block.number;
         
         emit CancelRent(msg.sender, tokenId);
@@ -200,11 +201,31 @@ contract Decentramall is ERC721 {
      * @dev Extend Rent SPACE
      * @param tokenId id of the SPACE token
      * @param rentDuration duration of rent extension
-     * @notice Rent extensions cant be cancelled
-     * @notice Requires: token to exist, token to be rented by renter
+     * @notice Rent extensions can't be cancelled, however, can be less than 1 month
+     * @notice Requires: token to exist, token to be rented, is renter, rentDuration doesnt exceed maxRentableBlock
      */
     function extendRent(uint256 tokenId, uint256 rentDuration) public {
-       
+        require(ownerOf(tokenId) == address(this), "EXTEND: Doesn't exist!");
+        require(spaceInfo[tokenId].expiryBlock > block.number, "EXTEND: Token not rented!");
+        require(spaceInfo[tokenId].rentedTo == msg.sender, "EXTEND: Not renter!");
+
+        uint256 rentUntil = spaceInfo[tokenId].expiryBlock + rentDuration;
+        require(rentUnti <= spaceInfo[tokenId].maxRentableBlock, "EXTEND: Rent duration exceed maxRentableBlock!");
+
+        // Finding price
+        uint256 actualPrice = price(totalSupply() + 1);
+        uint256 rentPrice = (actualPrice / 10) * (rentDuration/2252571); 
+
+        // Make rent payment
+        IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
+
+        // Change struct values
+        spaceInfo[tokenId].rentalEarned += rentPrice;
+        spaceInfo[tokenId].expiryBlock = rentUntil;
+        cooldownByAddress[msg.sender] = rentUntil;
+
+        _setTokenURI(tokenId, _tokenURI);
+        emit ExtendRent(msg.sender, tokenId, rentUntil, rentPrice);
     }
 
     /**
