@@ -49,6 +49,8 @@ In order to make it work with the webui, you also need to run `npm run generate-
 
 ## Test & Coverage
 
+To run tests, change minDeposit to 375 minRent to 187 in Decentramall.sol and day to 6
+
 ```bash
 $ npm run test
 $ npm run coverage
