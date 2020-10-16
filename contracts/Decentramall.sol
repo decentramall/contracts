@@ -200,29 +200,11 @@ contract Decentramall is ERC721 {
      * @dev Extend Rent SPACE
      * @param tokenId id of the SPACE token
      * @param rentDuration duration of rent extension
+     * @notice Rent extensions cant be cancelled
      * @notice Requires: token to exist, token to be rented by renter
      */
-    function extendRent(uint256 tokenId, string memory _tokenURI, uint256 rentDuration) public {
-        require(ownerOf(tokenId) == address(this), "RENT: Doesn't exist!");
-        require(spaceInfo[tokenId].expiryBlock < block.number, "RENT: Token is already rented!");
-
-        // This is gonna be big ouch for SPACE traders
-        for(uint i=0; i<balanceOf(msg.sender); i++){
-            require(ownerOf(uint256(keccak256(abi.encodePacked(msg.sender)))) != msg.sender, "RENT: Can't rent if address owns SPACE token");
-        }
-        
-        uint256 actualPrice = price(totalSupply() + 1);
-        uint256 rentPrice = actualPrice / 120; //In 18 decimals
-        IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
-        uint256 newExpBlock = block.number + 187714;
-
-        spaceInfo[tokenId].rentedTo = msg.sender;
-        spaceInfo[tokenId].rentalEarned = rentPrice;
-        spaceInfo[tokenId].expiryBlock = newExpBlock;
-        cooldownByAddress[msg.sender] = newExpBlock;
-
-        _setTokenURI(tokenId, _tokenURI);
-        emit RentSpace(msg.sender, tokenId, newExpBlock, rentPrice);
+    function extendRent(uint256 tokenId, uint256 rentDuration) public {
+       
     }
 
     /**
