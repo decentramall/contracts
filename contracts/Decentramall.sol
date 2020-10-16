@@ -29,6 +29,7 @@ contract Decentramall is ERC721 {
         uint256 rentalEarned; // The amount earnt
         uint256 rentPrice; // The most recent rent price (for cancel function)
         uint256 expiryBlock; // The block the rent expires
+        uint256 maxRentableBlock; // The last block someone can rent until  
     }
 
     //Mapping of tokenId to SpaceDetails
@@ -181,9 +182,8 @@ contract Decentramall is ERC721 {
     /**
      * @dev Extend Rent SPACE
      * @param tokenId id of the SPACE token
-     * @notice The SPACE must be rentable, which means it must exist in this contract, msg.sender does not own a space token,
-     * expiryBlock < block.number
-     * @notice Rent per year cost 1/10 of the price to buy new & lasts for 1 month (187714 blocks)
+     * @notice Extends another month, at 1/120 price per month (1/10 price per year) as usual
+     * @notice Requires: token to exist, token to be rented, is renter, funds are not claimed yet (will probably make cooldown in future)
      */
     function extendRent(uint256 tokenId, string memory _tokenURI) public {
         require(ownerOf(tokenId) == address(this), "RENT: Doesn't exist!");

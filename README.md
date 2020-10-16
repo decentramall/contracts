@@ -14,24 +14,22 @@ token, preventing anyone from gaining control of the entire mall by purchasing a
 
 ### 🌌 SPACE Token
 
-The SPACE token is created in the DecentramallToken.sol file. It follows a basic ERC721 implementation with nothing unique in particular.
+The price of SPACE tokens follow a Sigmoid function curve. This is because we want the price to increase rapidly near the beginning, but stabilize at the end. This means that if you are an early adopter, you will be rewarded. This also benefits late comers as they will not suffer an insane price that comes with quadratic curves. Each space is unique to and only one owner can own ONE(1) SPACE. This is to avoid monopolies. Since the SPACE tokens have to be minted only when a buyer exists, the bonding curve requires a slight modification to its implementation. It allows for continuous minting of tokens but only up to a certain threshold which is declared during initialization under _currentLimit_.
 
-However, to achieve the unique one-of-a-kind ownership and restriction, the ERC721 tokenID is based a _keccak256 hash_ of the owner's
+To achieve the unique one-of-a-kind ownership and restriction, the ERC721 tokenID is based a _keccak256 hash_ of the owner's
 address, making it impossible for an owner to mint an ERC721 token twice.
 
-### 🏠 Estate Agent
+### 💵 Staking & Rental
 
-The EstateAgent houses the bonding curve function as well as purchasing and selling of SPACE tokens.
+For a SPACE to be made available to rent, it has to be deposited and staked for a period of time. During this stake period, renters will be able to rent as long as they want until the final block number as found in _maxRentableBlock_. The minimum stake duration is 2 months, roughly _375428_ blocks. For rents, the minimum duration is 1 month, roughtly _187714_. This is to avoid the issue where a SPACE becomes ineligible for rent after roughly 14 seconds (1 block).
 
-Since the SPACE tokens have to be minted only when a buyer exists, the bonding curve requires a slight modification to its implementation. It allows for continuous minting of tokens but only up to a certain threshold which is declared during initialization under _\_currentLimit_.
+To find the price of rent, we can refer to the equation below. Generally, rent will cost 1/10 the price to purchase a new SPACE per year.
 
-### 💵 Rental Agent
+```
+rentPrice = rentDuration/2252571 * 1/10
 
-Handles the renting of SPACE tokens. Each rental lasts for **1 year** and will cost 1/10 of the current SPACE purchase price.
-
-### 🗳️ Administration
-
-Handles adding/removing admins from control of the contract
+where 2252571 is roughly 1 year with a 14 second block time
+```
 
 ## Installation
 
@@ -58,6 +56,8 @@ $ npm run coverage
 
 ## To-Do
 
-- [] Add cancel rent
+- [x] Add cancel rent
 - [] Add extend rent
 - [] Add testing
+
+## Explanation
