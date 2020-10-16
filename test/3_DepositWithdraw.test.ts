@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js';
 import { expect } from 'chai';
 import { DecentramallInstance, ERC20Instance } from '../types/truffle-contracts';
+import {advanceBlock} from './helpers/truffleTestHelper';
 
 const { BN, ether, expectRevert, expectEvent } = require('@openzeppelin/test-helpers');
 const { web3 } = require('@openzeppelin/test-helpers/src/setup');
