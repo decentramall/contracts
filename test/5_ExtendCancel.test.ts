@@ -31,18 +31,21 @@ contract('Decentramall', (accounts) => {
             const tx = await decentramallInstance.buy({ from: ownerA });
             tokenId = tx.logs[1].args[1].toString();
             await decentramallInstance.deposit(tokenId, "375", {from: ownerA});
+            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
+            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
+            await decentramallInstance.rent(tokenId, 'some-fake-cid', "187", { from: renterA })
         });
 
         it('should cancel successfully', async () => {
-            const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
-            const previousBalance = parseFloat(toBigNumber(await daiInstance.balanceOf(renterA)).toString());
-            await daiInstance.approve(decentramallInstance.address, rentPriceSPACE, { from: renterA });
-            await decentramallInstance.rent(tokenId, 'some-fake-cid', "187", { from: renterA })
-            const currentBalance = parseFloat(toBigNumber(await daiInstance.balanceOf(renterA)).toString());
+            await decentramallInstance.cancelRent(tokenId, {from: renterA});
+            
+            const nowBlock = await web3.eth.getBlockNumber();
             const spaceInfoData = await decentramallInstance.spaceInfo(tokenId, {from:renterA});
             const rentedTo = spaceInfoData[0];
-            // console.log(rentedTo);
-            await expect(rentedTo).to.be.equal(renterA);
+            const expiryBlock = spaceInfoData[4];
+            
+            await expect(rentedTo).to.be.equal("0x0000000000000000000000000000000000000000");
+            await expect(expiryBlock).to.be.equal(nowBlock);
         });
         it('should fail cancel (too short)', async () => {
             const rentPriceSPACE = parseFloat(toBigNumber(await decentramallInstance.price(2)).dividedBy(110).toString()).toString(); //For more allowane
