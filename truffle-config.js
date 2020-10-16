@@ -73,18 +73,18 @@ module.exports = {
 
     ropsten: {
       provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${infuraKey}`),
-      network_id: 3, // rinkeby's id
+      network_id: 3, // ropsten's id
       networkCheckTimeout: 10000000,
-      gas: 4712388,
-      gasPrice: 2000000000,
+      gas: 8000000,
+      gasPrice: 10000000000,
     },
 
     rinkeby: {
       provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/v3/${infuraKey}`),
       network_id: 4, // rinkeby's id
       networkCheckTimeout: 10000000,
-      gas: 4712388,
-      gasPrice: 2000000000,
+      gas: 10000000,
+      gasPrice: 5000000000,
     },
 
     goerli: {
