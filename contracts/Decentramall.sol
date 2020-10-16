@@ -32,7 +32,7 @@ contract Decentramall is ERC721 {
 
     //Mapping of tokenId to SpaceDetails
     mapping(uint256 => SpaceDetails) public spaceInfo;
-    //Mapping of address to cooldown block (prevent double renting & repeated rent,cancel,rent)
+    //Mapping of address to cooldown block (prevent double renting, rent-buy & repeated rent-cancel-rent)
     mapping(address => uint256) public cooldownByAddress;
 
     event BuySpace(address buyer, uint256 tokenId, uint256 price);
@@ -79,8 +79,10 @@ contract Decentramall is ERC721 {
 
     /**
      * @dev Buy SPACE
+     * @notice Cannot buy space if already renter
      */
     function buy() public {
+        require(cooldownByAddress[msg.sender] < block.number, "BUY: Can't buy if renter!");
         uint256 currentSupply = totalSupply();
         uint256 estimatedPrice = price(currentSupply + 1);
 
@@ -97,7 +99,7 @@ contract Decentramall is ERC721 {
      * @dev Sell SPACE
      */
     function sell(uint256 tokenId) public{
-        require(ownerOf(tokenId) == msg.sender, "WITHDRAW: Not owner!");
+        require(ownerOf(tokenId) == msg.sender, "SELL: Not owner!");
         uint256 quotedPrice = price(totalSupply());
         
         _burn(tokenId);
@@ -140,6 +142,69 @@ contract Decentramall is ERC721 {
         spaceInfo[tokenId].rentedTo = msg.sender;
         spaceInfo[tokenId].rentalEarned = rentPrice;
         spaceInfo[tokenId].expiryBlock = newExpBlock;
+        cooldownByAddress[msg.sender] = newExpBlock;
+
+        _setTokenURI(tokenId, _tokenURI);
+        emit RentSpace(msg.sender, tokenId, newExpBlock, rentPrice);
+    }
+
+    /**
+     * @dev Cancel Rent SPACE
+     * @param tokenId id of the SPACE token
+     * @param _tokenURI unique id for the store
+     * @notice The SPACE must be rentable, which means it must exist in this contract, msg.sender does not own a space token,
+     * expiryBlock < block.number
+     * @notice Rent per year cost 1/10 of the price to buy new & lasts for 1 month (187714 blocks)
+     */
+    function cancelRent(uint256 tokenId, string memory _tokenURI) public {
+        require(ownerOf(tokenId) == address(this), "RENT: Doesn't exist!");
+        require(spaceInfo[tokenId].expiryBlock < block.number, "RENT: Token is already rented!");
+
+        // This is gonna be big ouch for SPACE traders
+        for(uint i=0; i<balanceOf(msg.sender); i++){
+            require(ownerOf(uint256(keccak256(abi.encodePacked(msg.sender)))) != msg.sender, "RENT: Can't rent if address owns SPACE token");
+        }
+        
+        uint256 actualPrice = price(totalSupply() + 1);
+        uint256 rentPrice = actualPrice / 120; //In 18 decimals
+        IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
+        uint256 newExpBlock = block.number + 187714;
+
+        spaceInfo[tokenId].rentedTo = msg.sender;
+        spaceInfo[tokenId].rentalEarned = rentPrice;
+        spaceInfo[tokenId].expiryBlock = newExpBlock;
+        cooldownByAddress[msg.sender] = newExpBlock;
+
+        _setTokenURI(tokenId, _tokenURI);
+        emit RentSpace(msg.sender, tokenId, newExpBlock, rentPrice);
+    }
+
+    /**
+     * @dev Extend Rent SPACE
+     * @param tokenId id of the SPACE token
+     * @param _tokenURI unique id for the store
+     * @notice The SPACE must be rentable, which means it must exist in this contract, msg.sender does not own a space token,
+     * expiryBlock < block.number
+     * @notice Rent per year cost 1/10 of the price to buy new & lasts for 1 month (187714 blocks)
+     */
+    function extendRent(uint256 tokenId, string memory _tokenURI) public {
+        require(ownerOf(tokenId) == address(this), "RENT: Doesn't exist!");
+        require(spaceInfo[tokenId].expiryBlock < block.number, "RENT: Token is already rented!");
+
+        // This is gonna be big ouch for SPACE traders
+        for(uint i=0; i<balanceOf(msg.sender); i++){
+            require(ownerOf(uint256(keccak256(abi.encodePacked(msg.sender)))) != msg.sender, "RENT: Can't rent if address owns SPACE token");
+        }
+        
+        uint256 actualPrice = price(totalSupply() + 1);
+        uint256 rentPrice = actualPrice / 120; //In 18 decimals
+        IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
+        uint256 newExpBlock = block.number + 187714;
+
+        spaceInfo[tokenId].rentedTo = msg.sender;
+        spaceInfo[tokenId].rentalEarned = rentPrice;
+        spaceInfo[tokenId].expiryBlock = newExpBlock;
+        cooldownByAddress[msg.sender] = newExpBlock;
 
         _setTokenURI(tokenId, _tokenURI);
         emit RentSpace(msg.sender, tokenId, newExpBlock, rentPrice);

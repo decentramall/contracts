@@ -78,7 +78,7 @@ contract('Decentramall', (accounts) => {
             const tx = await decentramallInstance.buy({ from: ownerA });
             const tokenId = tx.logs[1].args[1].toString();
             const previousBalance = toBigNumber(await daiInstance.balanceOf(ownerA));
-            await expectRevert(decentramallInstance.sell(tokenId, { from: renterA }), 'WITHDRAW: Not owner!');
+            await expectRevert(decentramallInstance.sell(tokenId, { from: renterA }), 'SELL: Not owner!');
         });
         it('should fail buying two space', async () => {
             const priceSPACE = toBigNumber(await decentramallInstance.price(1)).toString();
