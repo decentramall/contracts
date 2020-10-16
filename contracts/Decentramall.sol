@@ -28,6 +28,7 @@ contract Decentramall is ERC721 {
         address rentedTo; // The address who rent
         uint256 rentalEarned; // The amount earnt
         uint256 rentPrice; // The most recent rent price (for cancel function)
+        uint256 startBlock; // The block the rent starts
         uint256 expiryBlock; // The block the rent expires
         uint256 maxRentableBlock; // The last block someone can rent until  
     }
@@ -39,7 +40,7 @@ contract Decentramall is ERC721 {
 
     event BuySpace(address buyer, uint256 tokenId, uint256 price);
     event SellSpace(address seller, uint256 tokenId, uint256 price);
-    event DepositSpace(address depositor, uint256 tokenId);
+    event DepositSpace(address depositor, uint256 tokenId, uint256 maxRentableBlock);
     event WithdrawSpace(address withdrawer, uint256 tokenId);
     event RentSpace(address renter, uint256 tokenId, uint256 expiryBlock, uint256 rentPaid);
     event ClaimRent(address owner, uint256 tokenId, uint256 rentClaimed);
@@ -99,6 +100,7 @@ contract Decentramall is ERC721 {
 
     /**
      * @dev Sell SPACE
+     * @notice Disabling the ability to sell other people's SPACE prevents a hacker from selling stolen SPACE
      */
     function sell(uint256 tokenId) public{
         require(ownerOf(tokenId) == msg.sender, "SELL: Not owner!");
@@ -111,40 +113,55 @@ contract Decentramall is ERC721 {
 
     /**
      * @dev Deposit SPACE to be rented out
+     * @param tokenId id of SPACE token
+     * @param stakeDuration length to stake
      * @notice Must ensure that it is your space before you can deposit it. This is to prevent double SPACE hogging
      */
-    function deposit(uint256 tokenId) public {
+    function deposit(uint256 tokenId, uint256 stakeDuration) public {
         require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "DEPOSIT: Not owner!");
+        require(stakeDuration >= 375428, "DEPOSIT: Stake duration has to be more than 375428 blocks!");
         transferFrom(msg.sender, address(this), tokenId);
-        emit DepositSpace(msg.sender, tokenId);
+        uint256 _maxRentableBlock = block.number + stakeDuration;
+        spaceInfo[tokenId].maxRentableBlock = _maxRentableBlock;
+        emit DepositSpace(msg.sender, tokenId, _maxRentableBlock);
     }
 
     /**
      * @dev Rent SPACE
      * @param tokenId id of the SPACE token
      * @param _tokenURI unique id for the store
+     * @param rentDuration duration for rent
      * @notice The SPACE must be rentable, which means it must exist in this contract, msg.sender does not own a space token,
-     * expiryBlock < block.number & cooldown < block.number
+     * expiryBlock < block.number, cooldown < block.number, at least 1 month & rentDuration < maxRentableBlock
      * @notice Rent per year cost 1/10 of the price to buy new & lasts for 1 month (187714 blocks)
      */
-    function rent(uint256 tokenId, string memory _tokenURI) public {
+    function rent(uint256 tokenId, string memory _tokenURI, uint256 rentDuration) public {
         require(ownerOf(tokenId) == address(this), "RENT: Doesn't exist!");
         require(cooldownByAddress[msg.sender] < block.number, "RENT: Cooldown active!");
+        require(rentDuration >= 187714, "RENT: Rent duration has to be more than 187714 blocks!");
         require(spaceInfo[tokenId].expiryBlock < block.number, "RENT: Token is already rented!");
+
+        uint256 rentUntil = block.number + rentDuration;
+        require(rentUnti <= spaceInfo[tokenId].maxRentableBlock, "RENT: Rent duration exceed maxRentableBlock!");
 
         // This is gonna be big ouch for SPACE traders
         for(uint i=0; i<balanceOf(msg.sender); i++){
             require(ownerOf(uint256(keccak256(abi.encodePacked(msg.sender)))) != msg.sender, "RENT: Can't rent if address owns SPACE token");
         }
         
+        // Finding price
         uint256 actualPrice = price(totalSupply() + 1);
-        uint256 rentPrice = actualPrice / 120; //In 18 decimals
-        IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
-        uint256 newExpBlock = block.number + 187714;
+        uint256 rentPrice = (actualPrice / 10) * (rentDuration/2252571); 
 
+        // Make rent payment
+        IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
+        uint256 newExpBlock = block.number + rentDuration;
+
+        // Change struct values
         spaceInfo[tokenId].rentedTo = msg.sender;
         spaceInfo[tokenId].rentalEarned += rentPrice;
         spaceInfo[tokenId].rentPrice = rentPrice;
+        spaceInfo[tokenId].startBlock = block.number;
         spaceInfo[tokenId].expiryBlock = newExpBlock;
         cooldownByAddress[msg.sender] = newExpBlock;
 
@@ -156,20 +173,20 @@ contract Decentramall is ERC721 {
      * @dev Cancel Rent SPACE
      * @param tokenId id of the SPACE token
      * @notice Forces address to wait two days before renting again
-     * @notice Currently refunds everything back
-     * @notice Requires: token to exist, token to be rented, is renter, funds are not claimed yet (will probably make cooldown in future)
+     * @notice Currently refunds 9/10 of initial price & can only be done within first day
+     * @notice Requires: token to exist, token to be rented, is renter
      */
     function cancelRent(uint256 tokenId) public {
         require(ownerOf(tokenId) == address(this), "CANCEL: Doesn't exist!");
         require(spaceInfo[tokenId].expiryBlock > block.number, "CANCEL: Token not rented!");
         require(spaceInfo[tokenId].rentedTo == msg.sender, "CANCEL: Not renter!");
-        require(spaceInfo[tokenId].rentalEarned > spaceInfo[tokenId].rentPrice, "CANCEL: Funds already claimed!");
+        require(spaceInfo[tokenId].startBlock + 6171 >= block.number, "CANCEL: Can't cancel after 1 day!");
         
         // Cooldown
         cooldownByAddress[msg.sender] = block.number + 12800; // Roughly two days
 
         // Refund
-        uint256 refund = spaceInfo[tokenId].rentPrice;
+        uint256 refund = spaceInfo[tokenId].rentPrice * 9/10;
         spaceInfo[tokenId].rentalEarned -= refund;
         IERC20(dai).transferFrom(address(this), msg.sender, refund);
 
@@ -182,10 +199,10 @@ contract Decentramall is ERC721 {
     /**
      * @dev Extend Rent SPACE
      * @param tokenId id of the SPACE token
-     * @notice Extends another month, at 1/120 price per month (1/10 price per year) as usual
-     * @notice Requires: token to exist, token to be rented, is renter, funds are not claimed yet (will probably make cooldown in future)
+     * @param rentDuration duration of rent extension
+     * @notice Requires: token to exist, token to be rented by renter
      */
-    function extendRent(uint256 tokenId, string memory _tokenURI) public {
+    function extendRent(uint256 tokenId, string memory _tokenURI, uint256 rentDuration) public {
         require(ownerOf(tokenId) == address(this), "RENT: Doesn't exist!");
         require(spaceInfo[tokenId].expiryBlock < block.number, "RENT: Token is already rented!");
 
@@ -211,12 +228,13 @@ contract Decentramall is ERC721 {
     /**
      * @dev Claim the rent earned
      * @param tokenId id of the SPACE token
-     * @notice Owner can claim rent right on Day 1 of renting
+     * @notice Owner can claim rent after 6171 blocks (1 day)
      * @notice Must be actual owner (proof if identity)
      **/
     function claim(uint256 tokenId) public {
         require(ownerOf(tokenId) == address(this), "CLAIM: Doesn't exist!");
         require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "CLAIM: Not owner!");
+        require(spaceInfo[tokenId].startBlock + 6171 < block.number, "CLAIM: Can't claim before 1 day!");
 
         uint256 toClaim = spaceInfo[tokenId].rentalEarned;
         spaceInfo[tokenId].rentalEarned -= toClaim;
@@ -232,12 +250,12 @@ contract Decentramall is ERC721 {
      * @notice We need to check for a few things.
      * First, does this token exist in this contract
      * Then, is the hash of the owner's address equal to that tokenID (proof of identity)
-     * Lastly, ensure that it is not currently being rented
+     * Lastly, ensure that it is past stake duration
      **/
     function withdraw(uint256 tokenId) public{
         require(ownerOf(tokenId) == address(this), "WITHDRAW: Doesn't exist!");
         require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "WITHDRAW: Not owner!");
-        require(spaceInfo[tokenId].expiryBlock < block.number, "WITHDRAW: Token is being rented!");
+        require(spaceInfo[tokenId].maxRentableBlock < block.number, "WITHDRAW: Token is locked!");
 
         //Claim rent
         claim(tokenId);

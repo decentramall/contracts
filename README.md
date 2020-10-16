@@ -26,7 +26,7 @@ For a SPACE to be made available to rent, it has to be deposited and staked for 
 To find the price of rent, we can refer to the equation below. Generally, rent will cost 1/10 the price to purchase a new SPACE per year.
 
 ```
-rentPrice = rentDuration/2252571 * 1/10
+rentPrice = rentDuration/2252571 * buyPrice/10
 
 where 2252571 is roughly 1 year with a 14 second block time
 ```
