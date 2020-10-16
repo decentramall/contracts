@@ -152,9 +152,10 @@ contract Decentramall is ERC721 {
         }
         
         // Finding price
-        uint256 actualPrice = price(totalSupply() + 1);
+        // uint256 actualPrice = price(totalSupply() + 1);
         // uint256 rentPrice = (actualPrice / 10) * (rentDuration/2252571); 
-        uint256 rentPrice = 2207252791264252534; // For testing
+        // uint256 rentPrice = 2207252791264252534; // For testing
+        uint256 rentPrice = getRentPrice(rentDuration);
 
         // Make rent payment
         IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
@@ -218,7 +219,7 @@ contract Decentramall is ERC721 {
 
         // Finding price
         uint256 actualPrice = price(totalSupply() + 1);
-        uint256 rentPrice = (actualPrice / 10) * (rentDuration/2252); 
+        uint256 rentPrice = (actualPrice * rentDuration / 22520); 
 
         // Make rent payment
         IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
