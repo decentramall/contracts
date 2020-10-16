@@ -53,11 +53,3 @@ In order to make it work with the webui, you also need to run `npm run generate-
 $ npm run test
 $ npm run coverage
 ```
-
-## To-Do
-
-- [x] Add cancel rent
-- [] Add extend rent
-- [] Add testing
-
-## Explanation

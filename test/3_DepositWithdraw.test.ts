@@ -1,6 +1,7 @@
 import BigNumber from 'bignumber.js';
 import { expect } from 'chai';
 import { DecentramallInstance, ERC20Instance } from '../types/truffle-contracts';
+import {advanceBlock} from './helpers/truffleTestHelper';
 
 const { BN, ether, expectRevert, expectEvent } = require('@openzeppelin/test-helpers');
 const { web3 } = require('@openzeppelin/test-helpers/src/setup');
@@ -31,23 +32,32 @@ contract('Decentramall', (accounts) => {
             // console.log("tx log object", tx);
             tokenId = tx.logs[1].args[1].toString();
         });
-
         it('should deposit successfully', async () => {
-            await decentramallInstance.deposit(tokenId, {from: ownerA});
+            await decentramallInstance.deposit(tokenId, "375428", {from: ownerA});
             const newOwner = await decentramallInstance.ownerOf(tokenId);
             expect(newOwner).to.be.eq(decentramallInstance.address);
         });
+        it('should fail deposit', async () => {
+            await expectRevert(decentramallInstance.deposit(tokenId, "375427", {from: ownerA}), "DEPOSIT: Stake duration has to be more than 375428 blocks!");
+        });
         it('should withdraw successfully', async () => {
-            await decentramallInstance.deposit(tokenId, {from: ownerA});
+            await decentramallInstance.deposit(tokenId, "375428",{from: ownerA});
+            for(let i=0; i<375428; i++){
+                await advanceBlock();
+            }
             await decentramallInstance.withdraw(tokenId, {from: ownerA});
             const newOwner = await decentramallInstance.ownerOf(tokenId);
             expect(newOwner).to.be.eq(ownerA);
         });
+        it('should fail withdraw (locked)', async () => {
+            await decentramallInstance.deposit(tokenId, "375428",{from: ownerA});
+            await expectRevert(decentramallInstance.withdraw(tokenId, {from: ownerA}), "WITHDRAW: Token is locked!");
+        });
         it('should not allow someone else to deposit', async () => {
-            await expectRevert(decentramallInstance.deposit(tokenId, {from: renterA}), "DEPOSIT: Not owner!");
+            await expectRevert(decentramallInstance.deposit(tokenId, "375428",{from: renterA}), "DEPOSIT: Not owner!");
         });
         it('should not allow someone else to withdraw', async () => {
-            await decentramallInstance.deposit(tokenId, {from: ownerA});
+            await decentramallInstance.deposit(tokenId, "375428",{from: ownerA});
             await expectRevert(decentramallInstance.withdraw(tokenId, {from: renterA}), "WITHDRAW: Not owner!");
         });
         it('should not allow withdraw as it doesnt exist in contract', async () => {
