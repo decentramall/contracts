@@ -5,6 +5,7 @@
         "strict": true,
         "moduleResolution": "node",
         "noImplicitThis": true,
+        "noImplicitAny": false,
         "alwaysStrict": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,

@@ -3,139 +3,267 @@ pragma solidity ^0.6.8;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { FixedMath } from "./FixedMath.sol";
 
 /** @title Decentramall SPACE token
  * @notice SPACE follows an ERC721 implementation
  * @dev Only one address can hold one SPACE token as the tokenID is a hash of the buyer's address
  */
 contract Decentramall is ERC721 {
+    using FixedMath for int256;
+
     //Max limit of tokens to be minted
-    uint256 public currentLimit;
-    //Base price to start
-    uint256 public basePrice;
-    //Multiplier to get price in 18 decimals
-    uint256 public multiplier = 1000000000000000000;
+    int256 public currentLimit;
+    //Midpoint for price function
+    int256 public midpoint;
+    //Half of max price 
+    int256 public maxPrice;
+    //Steepness
+    int256 public steepness;
+
     // DAI contract address
     address public dai;
 
-
-    //Holds current detals about the SPACE
     struct SpaceDetails {
-        address rentedTo;
-        uint256 rentalEarned;
-        uint256 expiryBlock;
+        address rentedTo; // The address who rent
+        uint256 rentalEarned; // The amount earnt
+        uint256 rentPrice; // The most recent rent price (for cancel function)
+        uint256 startBlock; // The block the rent starts
+        uint256 expiryBlock; // The block the rent expires
+        uint256 maxRentableBlock; // The last block someone can rent until  
     }
 
     //Mapping of tokenId to SpaceDetails
     mapping(uint256 => SpaceDetails) public spaceInfo;
+    //Mapping of address to cooldown block (prevent double renting, rent-buy & repeated rent-cancel-rent)
+    mapping(address => uint256) public cooldownByAddress;
 
-    // event SetLimit(uint256 limit);
-    event BuyToken(address indexed buyer, uint256 price, uint256 tokenId);
-    event SellToken(address indexed seller, uint256 price, uint256 tokenId);
-    event Received(address indexed sender, uint256 value);
-
-    event Deposit(address indexed from, uint256 tokenId);
-    event Rented(address indexed renter, uint256 tokenId, uint256 rentPrice);
-    event ClaimRent(address indexed owner, uint256 amount, uint256 toClaim);
+    event BuySpace(address buyer, uint256 tokenId, uint256 price);
+    event SellSpace(address seller, uint256 tokenId, uint256 price);
+    event DepositSpace(address depositor, uint256 tokenId, uint256 maxRentableBlock);
+    event WithdrawSpace(address withdrawer, uint256 tokenId);
+    event RentSpace(address renter, uint256 tokenId, uint256 expiryBlock, uint256 rentPaid);
+    event ClaimRent(address owner, uint256 tokenId, uint256 rentClaimed);
+    event ExtendRent(address renter, uint256 tokenId, uint256 newExpiryBlock, uint256 newRentPaid);
+    event CancelRent(address renter, uint256 tokenId);
 
     constructor(
-        uint256 _currentLimit,
-        uint256 _basePrice,
+        int256 _currentLimit,
+        int256 _maxPrice,
+        int256 _steepness,
         address _dai
     ) public ERC721("SPACE", "SPACE") {
         currentLimit = _currentLimit;
-        basePrice = _basePrice;
+        maxPrice = _maxPrice;
+        midpoint = currentLimit/2;
+        steepness = _steepness;
         dai = _dai;
     }
 
-    // /**
-    //  * @dev Change the currentLimit variable (Max supply)
-    //  * @param limit the current token minting limit
-    //  * Only admin(s) can change this variable
-    //  */
-    // function setLimit(uint256 limit) public onlyAdmin {
-    //     currentLimit = limit;
-    //     emit SetLimit(limit);
-    // }
-
     /**
      * @dev Get price of next token
-     * @param x the x value in the bonding curve graph
-     * Assuming current bonding curve function of y = x^2 + basePrice
+     * @param x the position on the curve to check
+     * Assuming current bonding curve function of 
+     * y = maxPrice/2(( x - midpoint )/sqrt(steepness + (x - midpoint)^2) + 1)
+     * In other words, a Sigmoid function
+     * Note that we divide back by 10^30 because 10^24 * 10^24 = 10^48 and most ERC20 is in 10^18
      * @return price at the specific position in bonding curve
      */
-    function price(uint256 x) public view returns (uint256) {
-        return ((x**2) + basePrice);
+    function price(uint256 x) public view returns(uint256){
+        int256 numerator = int256(x) - midpoint;
+        int256 innerSqrt = (steepness + (numerator)**2);
+        int256 fixedInner = innerSqrt.toFixed();
+        int256 fixedDenominator = fixedInner.sqrt();
+        int256 fixedNumerator = numerator.toFixed();
+        int256 midVal = fixedNumerator.divide(fixedDenominator) + 1000000000000000000000000;
+        int256 fixedFinal = maxPrice.toFixed() * midVal;
+        return uint256(fixedFinal / 1000000000000000000000000000000);
     }
 
     /**
-     * @dev Buy a unique token
-     * One address can only hold one token as the token ID is based on a hashed version of the buyer's address
-     * The price of the token is based on a bonding curve function
+     * @dev Buy SPACE
+     * @notice Cannot buy space if already renter
      */
     function buy() public {
-        require(totalSupply() < currentLimit, "Max supply reached!");
-        uint256 quotedPrice = price(totalSupply() + 1) * multiplier;
+        require(cooldownByAddress[msg.sender] < block.number, "BUY: Can't buy if renter!");
+        uint256 currentSupply = totalSupply();
+        uint256 estimatedPrice = price(currentSupply + 1);
 
-        IERC20(dai).transferFrom(msg.sender, address(this), quotedPrice);
+        require(currentSupply < uint256(currentLimit), "BUY: Max Supply Reached!");
+
+        IERC20(dai).transferFrom(msg.sender, address(this), estimatedPrice);
         uint256 tokenId = uint256(keccak256(abi.encodePacked(msg.sender)));
+
         _mint(msg.sender, tokenId);
-
-        emit BuyToken(msg.sender, quotedPrice, tokenId);
+        emit BuySpace(msg.sender, tokenId, estimatedPrice);
     }
 
     /**
-     * @dev Sell a unique token
-     * Sell and burn the token that has been minted
-     * @param tokenId the ID of the token being sold
-     * - The price of the token is based on a bonding curve function
-     * - Will check if token is legitimate
+     * @dev Sell SPACE
+     * @notice Disabling the ability to sell other people's SPACE prevents a hacker from selling stolen SPACE
      */
-    function sell(uint256 tokenId) public {
-        require(
-            ownerOf(tokenId) == msg.sender,
-            "Fake token!"
-        );
-        uint256 quotedPrice = price(totalSupply()) * multiplier;
-        IERC20(dai).transfer(msg.sender, quotedPrice);
+    function sell(uint256 tokenId) public{
+        require(ownerOf(tokenId) == msg.sender, "SELL: Not owner!");
+        uint256 quotedPrice = price(totalSupply());
+        
         _burn(tokenId);
-        emit SellToken(msg.sender, quotedPrice, tokenId);
+        IERC20(dai).transfer(msg.sender, quotedPrice);
+        emit SellSpace(msg.sender, tokenId, quotedPrice);
     }
 
     /**
-     * @dev Allows users to rent a SPACE token of choice
-     * @param tokenId ID of the token to check
-     * @notice rent per year cost 1/10 of the price to buy new & lasts for 1 month (187714 blocks)
-     **/
-    function rent(uint256 tokenId, string memory _tokenURI) public {
-        require(
-            spaceInfo[tokenId].expiryBlock < block.number,
-            "Token is already rented!"
-        );
-        uint256 actualPrice = price(totalSupply() + 1) * multiplier;
-        uint256 rentPrice = actualPrice / 120; //In 18 decimals
-        IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
-        spaceInfo[tokenId].rentedTo = msg.sender;
-        spaceInfo[tokenId].rentalEarned = rentPrice;
-        spaceInfo[tokenId].expiryBlock = block.number + 187714;
-        _setTokenURI(tokenId, _tokenURI);
-        emit Rented(msg.sender, tokenId, rentPrice);
+     * @dev Deposit SPACE to be rented out
+     * @param tokenId id of SPACE token
+     * @param stakeDuration length to stake
+     * @notice Must ensure that it is your space before you can deposit it. This is to prevent double SPACE hogging
+     */
+    function deposit(uint256 tokenId, uint256 stakeDuration) public {
+        require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "DEPOSIT: Not owner!");
+        require(stakeDuration >= 375428, "DEPOSIT: Stake duration has to be more than 375428 blocks!");
+        transferFrom(msg.sender, address(this), tokenId);
+        uint256 _maxRentableBlock = block.number + stakeDuration;
+        spaceInfo[tokenId].maxRentableBlock = _maxRentableBlock;
+        emit DepositSpace(msg.sender, tokenId, _maxRentableBlock);
     }
 
-    // TODO: add method to extend rent
+    /**
+     * @dev Rent SPACE
+     * @param tokenId id of the SPACE token
+     * @param _tokenURI unique id for the store
+     * @param rentDuration duration for rent
+     * @notice The SPACE must be rentable, which means it must exist in this contract, msg.sender does not own a space token,
+     * expiryBlock < block.number, cooldown < block.number, at least 1 month & rentDuration < maxRentableBlock
+     * @notice Rent per year cost 1/10 of the price to buy new & lasts for 1 month (187714 blocks)
+     */
+    function rent(uint256 tokenId, string memory _tokenURI, uint256 rentDuration) public {
+        require(ownerOf(tokenId) == address(this), "RENT: Doesn't exist!");
+        require(cooldownByAddress[msg.sender] < block.number, "RENT: Cooldown active!");
+        require(rentDuration >= 187714, "RENT: Rent duration has to be more than 187714 blocks!");
+        require(spaceInfo[tokenId].expiryBlock < block.number, "RENT: Token is already rented!");
 
-    // TODO: add method to cancel rent, forcing to wait two days
+        uint256 rentUntil = block.number + rentDuration;
+        require(rentUntil <= spaceInfo[tokenId].maxRentableBlock, "RENT: Rent duration exceed maxRentableBlock!");
+
+        // This is gonna be big ouch for SPACE traders
+        for(uint i=0; i<balanceOf(msg.sender); i++){
+            require(ownerOf(uint256(keccak256(abi.encodePacked(msg.sender)))) != msg.sender, "RENT: Can't rent if address owns SPACE token");
+        }
+        
+        // Finding price
+        uint256 actualPrice = price(totalSupply() + 1);
+        uint256 rentPrice = (actualPrice * rentDuration / 22525710);
+
+        // Make rent payment
+        IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
+        uint256 newExpBlock = block.number + rentDuration;
+
+        // Change struct values
+        spaceInfo[tokenId].rentedTo = msg.sender;
+        spaceInfo[tokenId].rentalEarned += rentPrice;
+        spaceInfo[tokenId].rentPrice = rentPrice;
+        spaceInfo[tokenId].startBlock = block.number;
+        spaceInfo[tokenId].expiryBlock = newExpBlock;
+        cooldownByAddress[msg.sender] = newExpBlock;
+
+        _setTokenURI(tokenId, _tokenURI);
+        emit RentSpace(msg.sender, tokenId, newExpBlock, rentPrice);
+    }
+
+    /**
+     * @dev Cancel Rent SPACE
+     * @param tokenId id of the SPACE token
+     * @notice Forces address to wait two days before renting again
+     * @notice Currently refunds 9/10 of initial price & can only be done within first day
+     * @notice Requires: token to exist, token to be rented, is renter
+     */
+    function cancelRent(uint256 tokenId) public {
+        require(ownerOf(tokenId) == address(this), "CANCEL: Doesn't exist!");
+        require(spaceInfo[tokenId].expiryBlock > block.number, "CANCEL: Token not rented!");
+        require(spaceInfo[tokenId].rentedTo == msg.sender, "CANCEL: Not renter!");
+        require(spaceInfo[tokenId].startBlock + 6171 >= block.number, "CANCEL: Can't cancel after 1 day!");
+        
+        // Cooldown
+        cooldownByAddress[msg.sender] = block.number + 12800; // Roughly two days
+
+        // Refund
+        uint256 refund = spaceInfo[tokenId].rentPrice * 9/10;
+        spaceInfo[tokenId].rentalEarned -= refund;
+        IERC20(dai).transfer(msg.sender, refund);
+
+        // Remove rent status
+        spaceInfo[tokenId].rentedTo = address(0); // Safer, prevents accidental issues
+        spaceInfo[tokenId].expiryBlock = block.number;
+        
+        emit CancelRent(msg.sender, tokenId);
+    }
+
+    /**
+     * @dev Extend Rent SPACE
+     * @param tokenId id of the SPACE token
+     * @param rentDuration duration of rent extension
+     * @notice Rent extensions can't be cancelled, however, can be less than 1 month
+     * @notice Requires: token to exist, token to be rented, is renter, rentDuration doesnt exceed maxRentableBlock
+     */
+    function extendRent(uint256 tokenId, uint256 rentDuration) public {
+        require(ownerOf(tokenId) == address(this), "EXTEND: Doesn't exist!");
+        require(spaceInfo[tokenId].expiryBlock > block.number, "EXTEND: Token not rented!");
+        require(spaceInfo[tokenId].rentedTo == msg.sender, "EXTEND: Not renter!");
+
+        uint256 rentUntil = spaceInfo[tokenId].expiryBlock + rentDuration;
+        require(rentUntil <= spaceInfo[tokenId].maxRentableBlock, "EXTEND: Rent duration exceed maxRentableBlock!");
+
+        // Finding price
+        uint256 actualPrice = price(totalSupply() + 1);
+        uint256 rentPrice = (actualPrice * rentDuration / 22520); 
+
+        // Make rent payment
+        IERC20(dai).transferFrom(msg.sender, address(this), rentPrice);
+
+        // Change struct values
+        spaceInfo[tokenId].rentalEarned += rentPrice;
+        spaceInfo[tokenId].expiryBlock = rentUntil;
+        cooldownByAddress[msg.sender] = rentUntil;
+
+        emit ExtendRent(msg.sender, tokenId, rentUntil, rentPrice);
+    }
 
     /**
      * @dev Claim the rent earned
      * @param tokenId id of the SPACE token
-     * @notice Owner can claim rent right on Day 1 of renting
+     * @notice Owner can claim rent after 6171 blocks (1 day)
+     * @notice Must be actual owner (proof if identity)
      **/
     function claim(uint256 tokenId) public {
-        require(ownerOf(tokenId) == msg.sender, "Not owner!");
+        require(ownerOf(tokenId) == address(this), "CLAIM: Doesn't exist!");
+        require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "CLAIM: Not owner!");
+        require(spaceInfo[tokenId].startBlock + 6171 < block.number, "CLAIM: Can't claim before 1 day!");
+
         uint256 toClaim = spaceInfo[tokenId].rentalEarned;
-        IERC20(dai).transfer(msg.sender, toClaim);
         spaceInfo[tokenId].rentalEarned -= toClaim;
+
+        IERC20(dai).transfer(msg.sender, toClaim);
         emit ClaimRent(msg.sender, tokenId, toClaim);
+    }
+
+    /**
+     * @dev Withdraw space
+     * @param tokenId id of the SPACE token
+     * @notice Withdrawing also claims rent
+     * @notice We need to check for a few things.
+     * First, does this token exist in this contract
+     * Then, is the hash of the owner's address equal to that tokenID (proof of identity)
+     * Lastly, ensure that it is past stake duration
+     **/
+    function withdraw(uint256 tokenId) public{
+        require(ownerOf(tokenId) == address(this), "WITHDRAW: Doesn't exist!");
+        require(uint256(keccak256(abi.encodePacked(msg.sender))) == tokenId, "WITHDRAW: Not owner!");
+        require(spaceInfo[tokenId].maxRentableBlock < block.number, "WITHDRAW: Token is locked!");
+
+        //Claim rent
+        claim(tokenId);
+
+        //Withdraw
+        _transfer(address(this), msg.sender, tokenId);
+        emit WithdrawSpace(msg.sender, tokenId);
     }
 }
