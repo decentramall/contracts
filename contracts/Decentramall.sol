@@ -24,6 +24,9 @@ contract Decentramall is ERC721 {
     // DAI contract address
     address public dai;
 
+    // admin address
+    address public admin;
+
     struct SpaceDetails {
         address rentedTo; // The address who rent
         uint256 rentalEarned; // The amount earnt
@@ -31,6 +34,11 @@ contract Decentramall is ERC721 {
         uint256 startBlock; // The block the rent starts
         uint256 expiryBlock; // The block the rent expires
         uint256 maxRentableBlock; // The last block someone can rent until  
+    }
+
+    modifier isAdmin{
+        require(msg.sender == admin);
+        _;
     }
 
     //Mapping of tokenId to SpaceDetails
@@ -265,5 +273,21 @@ contract Decentramall is ERC721 {
         //Withdraw
         _transfer(address(this), msg.sender, tokenId);
         emit WithdrawSpace(msg.sender, tokenId);
+    }
+
+    /**
+     * @dev Change DAI address
+     * @param newAddress new address
+     **/
+    function changeDaiAddress(address newDai) public isAdmin{
+        dai = newDai;
+    }
+
+    /**
+     * @dev Change admin
+     * @param newAddress new address
+     **/
+    function changeAdmin(address newAdmin) public isAdmin{
+        admin = newAdmin;
     }
 }

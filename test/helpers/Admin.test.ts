@@ -15,13 +15,12 @@ function toBigNumber(bigNumber: BigNumber) {
 
 contract('Decentramall', (accounts) => {
     const ownerA = accounts[0];
-    const renterA = accounts[1];
-    const ownerB = accounts[2];
+    const rogueA = accounts[1];
     let decentramallInstance: DecentramallInstance;
     let daiInstance: ERC20Instance;
     let tokenId: string;
 
-    describe('Price', () => {
+    describe('Change Variables', () => {
         beforeEach(async () => {
             daiInstance = await DAI.new(accounts);
             decentramallInstance = await Decentramall.new(1200, 2500, 100000, daiInstance.address);
