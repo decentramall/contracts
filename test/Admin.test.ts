@@ -1,6 +1,6 @@
 import BigNumber from 'bignumber.js';
 import { expect } from 'chai';
-import { DecentramallInstance, ERC20Instance } from '../types/truffle-contracts';
+import { DecentramallInstance, DAIInstance } from '../types/truffle-contracts';
 
 const { BN, ether, expectRevert, expectEvent } = require('@openzeppelin/test-helpers');
 const { web3 } = require('@openzeppelin/test-helpers/src/setup');
@@ -18,7 +18,7 @@ contract('Decentramall', (accounts) => {
     const rogueA = accounts[1];
     const ownerB = accounts[2];
     let decentramallInstance: DecentramallInstance;
-    let daiInstance: ERC20Instance;
+    let daiInstance: DAIInstance;
     let tokenId: string;
 
     describe('Change & Mint', () => {
@@ -40,15 +40,16 @@ contract('Decentramall', (accounts) => {
             expect(await decentramallInstance.admin({from:ownerA})).to.be.equal(ownerB);
         });
         it('Should fail change admin', async () => {
-            await expectRevert(decentramallInstance.changeAdmin(ownerB, {from:ownerA}), "ADMIN: Not allowed!");
+            await expectRevert(decentramallInstance.changeAdmin(ownerB, {from:ownerB}), "ADMIN: Not allowed!");
         });
-        // it('Should mint dai', async () => {
-        //     const priceSPACE = toBigNumber(await decentramallInstance.price(1200)).toString();
-        //     expect(priceSPACE > "4710500000000000000000" || priceSPACE < "4711500000000000000000").to.be.equal(true);
-        // });
-        // it('Should fail mint dai', async () => {
-        //     const priceSPACE = toBigNumber(await decentramallInstance.price(1200)).toString();
-        //     expect(priceSPACE > "4710500000000000000000" || priceSPACE < "4711500000000000000000").to.be.equal(true);
-        // });
+        it('Should mint dai', async () => {
+            const previousBalance = toBigNumber(await daiInstance.balanceOf(ownerA));
+            await daiInstance.mint(ownerA, "1000000000000000000", {from: ownerA});
+            const newBalance = toBigNumber(await daiInstance.balanceOf(ownerA)).toString();
+            expect(newBalance).to.be.equal(previousBalance.plus("1000000000000000000").toString());
+        });
+        it('Should fail mint dai', async () => {
+            await expectRevert(daiInstance.mint(ownerA, "1000000000000000000", {from: ownerB}), "You can't mint!");
+        });
     });
 });
