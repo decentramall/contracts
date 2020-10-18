@@ -54,6 +54,8 @@ contract Decentramall is ERC721 {
     event ClaimRent(address owner, uint256 tokenId, uint256 rentClaimed);
     event ExtendRent(address renter, uint256 tokenId, uint256 newExpiryBlock, uint256 newRentPaid);
     event CancelRent(address renter, uint256 tokenId);
+    event ChangeDai(address newDai);
+    event ChangeAdmin(address newAdmin);
 
     constructor(
         int256 _currentLimit,
@@ -277,17 +279,19 @@ contract Decentramall is ERC721 {
 
     /**
      * @dev Change DAI address
-     * @param newAddress new address
+     * @param newDai new address
      **/
     function changeDaiAddress(address newDai) public isAdmin{
         dai = newDai;
+        emit ChangeDai(newDai);
     }
 
     /**
      * @dev Change admin
-     * @param newAddress new address
+     * @param newAdmin new address
      **/
     function changeAdmin(address newAdmin) public isAdmin{
         admin = newAdmin;
+        emit ChangeAdmin(newAdmin);
     }
 }

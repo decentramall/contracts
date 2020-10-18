@@ -18,6 +18,6 @@ contract DAI is ERC20 {
 
     function mint(address to, uint256 amount) public{
         require(minter == msg.sender, "You can't mint!");
-        _mint(to, amount)
+        _mint(to, amount);
     }
 }
