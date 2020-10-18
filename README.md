@@ -60,8 +60,8 @@ $ npm run coverage
 
 - Rinkeby
   - FixedMath.sol (Custom int256 library to handle fixed point numbers & square root. Some inspiration drawn from [FixidityLib](https://github.com/CementDAO/Fixidity))
-    - Contract Address: **0x3e396C3148676EBCf0E51F64aAA1222fA98e32cf**
+    - Contract Address: **0x6985897120ca08f1CEAC3C8F909F6bfC9D6F4aa7**
   - DAI.sol (Custom DAI to try out purchasing SPACE)
-    - Contract Address: **0x36E6E4ca0C3f310bFc09ea9D87201D9aec2d3c2B**
+    - Contract Address: **0xe7e8F9a8648581433710105C380cE71771422d08**
   - Decentramall.sol (The real deal)
-    - Contract Address: **0xb5e9CA24cE71643DBbe4b54917F4683478746f25**
+    - Contract Address: **0x31263af02f40Aa9479eCb7e1c890999863b69725**
