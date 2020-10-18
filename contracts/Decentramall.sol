@@ -37,7 +37,7 @@ contract Decentramall is ERC721 {
     }
 
     modifier isAdmin{
-        require(msg.sender == admin);
+        require(msg.sender == admin, "ADMIN: Not allowed!");
         _;
     }
 
@@ -68,6 +68,7 @@ contract Decentramall is ERC721 {
         midpoint = currentLimit/2;
         steepness = _steepness;
         dai = _dai;
+        admin = msg.sender;
     }
 
     /**
