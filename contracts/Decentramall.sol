@@ -24,6 +24,9 @@ contract Decentramall is ERC721 {
     // DAI contract address
     address public dai;
 
+    // admin address
+    address public admin;
+
     struct SpaceDetails {
         address rentedTo; // The address who rent
         uint256 rentalEarned; // The amount earnt
@@ -31,6 +34,11 @@ contract Decentramall is ERC721 {
         uint256 startBlock; // The block the rent starts
         uint256 expiryBlock; // The block the rent expires
         uint256 maxRentableBlock; // The last block someone can rent until  
+    }
+
+    modifier isAdmin{
+        require(msg.sender == admin, "ADMIN: Not allowed!");
+        _;
     }
 
     //Mapping of tokenId to SpaceDetails
@@ -46,6 +54,8 @@ contract Decentramall is ERC721 {
     event ClaimRent(address owner, uint256 tokenId, uint256 rentClaimed);
     event ExtendRent(address renter, uint256 tokenId, uint256 newExpiryBlock, uint256 newRentPaid);
     event CancelRent(address renter, uint256 tokenId);
+    event ChangeDai(address newDai);
+    event ChangeAdmin(address newAdmin);
 
     constructor(
         int256 _currentLimit,
@@ -58,6 +68,7 @@ contract Decentramall is ERC721 {
         midpoint = currentLimit/2;
         steepness = _steepness;
         dai = _dai;
+        admin = msg.sender;
     }
 
     /**
@@ -265,5 +276,23 @@ contract Decentramall is ERC721 {
         //Withdraw
         _transfer(address(this), msg.sender, tokenId);
         emit WithdrawSpace(msg.sender, tokenId);
+    }
+
+    /**
+     * @dev Change DAI address
+     * @param newDai new address
+     **/
+    function changeDaiAddress(address newDai) public isAdmin{
+        dai = newDai;
+        emit ChangeDai(newDai);
+    }
+
+    /**
+     * @dev Change admin
+     * @param newAdmin new address
+     **/
+    function changeAdmin(address newAdmin) public isAdmin{
+        admin = newAdmin;
+        emit ChangeAdmin(newAdmin);
     }
 }
