@@ -295,4 +295,14 @@ contract Decentramall is ERC721 {
         admin = newAdmin;
         emit ChangeAdmin(newAdmin);
     }
+
+    /**
+     * @dev Withdraw DAI from contract
+     * @param toWithdraw address to withdraw to
+     * @param amount amount to withdraw
+     **/
+    function contractWithdraw(address toWithdraw, uint256 amount) public isAdmin{
+        admin = newAdmin;
+        emit ChangeAdmin(newAdmin);
+    }
 }
