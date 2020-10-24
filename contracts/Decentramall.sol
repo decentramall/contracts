@@ -56,6 +56,7 @@ contract Decentramall is ERC721 {
     event CancelRent(address renter, uint256 tokenId);
     event ChangeDai(address newDai);
     event ChangeAdmin(address newAdmin);
+    event ContractWithdraw(address to, uint256 amount);
 
     constructor(
         int256 _currentLimit,
@@ -294,5 +295,15 @@ contract Decentramall is ERC721 {
     function changeAdmin(address newAdmin) public isAdmin{
         admin = newAdmin;
         emit ChangeAdmin(newAdmin);
+    }
+
+    /**
+     * @dev Withdraw DAI from contract
+     * @param toWithdraw address to withdraw to
+     * @param amount amount to withdraw
+     **/
+    function contractWithdraw(address toWithdraw, uint256 amount) public isAdmin{
+        IERC20(dai).transfer(toWithdraw, amount);
+        emit ContractWithdraw(toWithdraw, amount);
     }
 }
